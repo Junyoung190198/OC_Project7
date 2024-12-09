@@ -26,6 +26,18 @@ const sequelize = new Sequelize(
   }  
 );
 
+const connectDatabase = ()=>{
+  return sequelize.authenticate()
+  .then(()=>{
+    console.log('Well connected to SQL Server');
+  })
+  .catch((error)=>{
+    console.log('Unable to connect to SQL Server');
+    console.log(error);
+  });
+};
+
+
 /**
  * Self calling arrow function for connection testing purpose
  */
@@ -41,4 +53,4 @@ const sequelize = new Sequelize(
 })();
  */
 
-module.exports = sequelize;
+module.exports = {sequelize, connectDatabase};
