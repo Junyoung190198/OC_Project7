@@ -1,18 +1,32 @@
-const User = require('./user');
-const Role = require('./role');
+const {sequelize} = require('../config/database');
 const {connectDatabase} = require('../config/database');
 
 
-
-
-const syncModels =  async()=>{
+const syncModels= async()=>{
     try{
         await connectDatabase();
-        await User.sync({force: true});
-        await Role.sync({alter: true});
-        console.log('Models well synchronized');
+
+        /**
+         * Loading models to be usable in sequelize.models
+         */
+        require('./employees');
+        require('./posts');
+        require('./media');
+        require('./credentials');
+
+        /**
+         * Calling relationship.js to define and set relationships 
+         * and associations
+         */
+        const defineRelationships = require('./relationships');
+        defineRelationships(sequelize);
+
+        // sync all models at once to the database,
+        // using alter:false to avoid trying to alter tables
+        await sequelize.sync({alter: false, force: false});
+        console.log(sequelize.modelManager.models);
     }catch(error){
-        console.log(error);
+        throw error; 
     }
 };
  

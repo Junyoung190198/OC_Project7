@@ -26,6 +26,11 @@ const sequelize = new Sequelize(
   }  
 );
 
+
+/**
+ * Connecting to the database using login credentials 
+ * (This login is read write only)
+ */
 const connectDatabase = ()=>{
   return sequelize.authenticate()
   .then(()=>{

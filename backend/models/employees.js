@@ -6,32 +6,29 @@ const Employees = sequelize.define('Employees', {
     EmployeeID:{
         type: DataTypes.INTEGER,
         primarykey: true,
-        autoIncrement: true,
         allowNull: false
     },
 
     FirstName:{
-        type: DataTypes.STRING(50),
-        allowNull: true
+        type: DataTypes.STRING,
     },
 
     LastName:{
-        type: DataTypes.STRING(50),
-        allowNull: true
+        type: DataTypes.STRING,
     },
 
     Address:{
-        type: DataTypes.TEXT,
-        allowNull: true
+        type: DataTypes.STRING,
     },
 
     PhoneNumber:{
-        type: DataTypes.CHAR(10),
+        type: DataTypes.STRING,
     },
     
 },
 {
-    tableName:'Employee'
+    freezeTableName: true,
+    timestamps: false
 });
 
 

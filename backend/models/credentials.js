@@ -6,29 +6,27 @@ const Credentials = sequelize.define('Credentials', {
     CredentialsID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true,
         allowNull: false
     },
 
     EmployeeID:{
         type: DataTypes.INTEGER,
-        allowNull: false,
-        references:{
-            model:'Employees',
-            key:'EmployeeID'
-        }
+        allowNull: false
     },
 
     Username:{
-        type: DataTypes.STRING(100),
+        type: DataTypes.STRING,
+        allowNull: false
     },
 
     Password:{
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: false
     }
 },
 {
-    freezeTableName: true
+    freezeTableName: true,
+    timestamps: false
 });
 
 
