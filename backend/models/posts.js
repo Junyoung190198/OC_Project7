@@ -1,6 +1,6 @@
 const {sequelize} = require('../config/database');
 const {DataTypes} = require('sequelize');
-const Employees = require('./employees');
+
 
 const Posts = sequelize.define('Posts', {
     PostID:{
@@ -19,6 +19,10 @@ const Posts = sequelize.define('Posts', {
     },
     
     PostTitle:{
+        type: DataTypes.STRING
+    },
+
+    _id:{
         type: DataTypes.STRING
     }
 },

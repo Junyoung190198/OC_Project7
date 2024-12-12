@@ -24,7 +24,6 @@ const syncModels= async()=>{
         // sync all models at once to the database,
         // using alter:false to avoid trying to alter tables
         await sequelize.sync({alter: false, force: false});
-        console.log(sequelize.modelManager.models);
     }catch(error){
         throw error; 
     }

@@ -23,6 +23,6 @@ syncModels()
 // Authentification routes loading: signup, login etc ...
 app.use('/groupomania/auth', employeesRoutes);
 // All posting related routes loading: upload posts, like/dislike etc...
-app.use('groupomania/posts', postsRoutes);
+app.use('/groupomania/posts', postsRoutes);
 
 module.exports = app;
