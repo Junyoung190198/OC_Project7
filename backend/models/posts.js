@@ -9,7 +9,7 @@ const Posts = sequelize.define('Posts', {
         allowNull: false
     },
 
-    EmployeeID:{
+    EmployeeAccountID:{
         type: DataTypes.INTEGER,
         allowNull: false
     },
@@ -23,7 +23,8 @@ const Posts = sequelize.define('Posts', {
     },
 
     _id:{
-        type: DataTypes.STRING
+        type: DataTypes.UUID,
+        allowNull: false
     }
 },
 {

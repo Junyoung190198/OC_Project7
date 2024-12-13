@@ -1,15 +1,15 @@
 
 const defineRelationships = (sequelize)=>{
-    const {Employees, Posts, Media, Credentials} = sequelize.models;
+    const {Employees, Posts, Media, EmployeeAccount} = sequelize.models;
 
-    Employees.hasMany(Posts, {foreignKey:'EmployeeID', constraints: false});
-    Posts.belongsTo(Employees, {foreignKey:'EmployeeID', constraints: false});
+    EmployeeAccount.hasMany(Posts, {foreignKey:'EmployeeAccountID', constraints: false});
+    Posts.belongsTo(EmployeeAccount, {foreignKey:'EmployeeAccountID', constraints: false});
 
     Posts.hasMany(Media, {foreignKey:'PostID', constraints: false});
     Media.belongsTo(Posts, {foreignKey:'PostID', constraints: false});
 
-    Employees.hasOne(Credentials, {foreignKey:'EmployeeID', constraints: false});
-    Credentials.belongsTo(Employees, {foreignKey:'EmployeeID', constraints: false});
+    Employees.hasOne(EmployeeAccount, {foreignKey:'EmployeeAccountID', constraints: false});
+    EmployeeAccount.belongsTo(Employees, {foreignKey:'EmployeeAccountID', constraints: false});
 };
 
 module.exports = defineRelationships;

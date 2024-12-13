@@ -15,10 +15,15 @@ const Media = sequelize.define('Media',{
 
     MediaType:{
         type: DataTypes.STRING
+    },
+
+    MediaUrl:{
+        type: DataTypes.STRING
     }
 },
 {
-    freezeTableName: true
+    freezeTableName: true,
+    timestamps: false
 });
 
 module.exports = Media;

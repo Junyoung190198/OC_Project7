@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const syncModels = require('./models/index');
-const employeesRoutes = require('./routes/employees');
+const employeeAccountRoutes = require('./routes/employeeAccount');
 const postsRoutes = require('./routes/posts');
 
 const app = express(); // set up express server
@@ -21,7 +21,7 @@ syncModels()
 });
 
 // Authentification routes loading: signup, login etc ...
-app.use('/groupomania/auth', employeesRoutes);
+app.use('/groupomania/auth', employeeAccountRoutes);
 // All posting related routes loading: upload posts, like/dislike etc...
 app.use('/groupomania/posts', postsRoutes);
 

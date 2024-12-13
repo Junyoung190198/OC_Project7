@@ -1,21 +1,66 @@
-const {sequelize} = require('../config/database');
 const Post = require('../models/posts');
-const Credentials = require('../models/credentials');
+const employeeAccount = require('../models/employeeAccount');
+const {v4: uuidv4} = require('uuid');
 
 
 exports.createPost = (req, res, next)=>{
+
+    // auth logic here 
+
     const contentType = req.get('Content-Type');
-    const request = req.body;
+    let request;
+
     if(contentType.includes('multipart/form-data')){
         // handle request containing uploaded files
-        
-    }else{
-        // handle normal json request
+        request = JSON.parse(req.body.post);
+    } else{
+        // handle normal application/json request
+        request = req.body;
     }
+    
+    if(!request.PostTitle || !request.PostContent){
+        return res.status(400).json({error: 'Post has no title or no content'});
+    }
+
+    // create unique identifier to id each unique post
+    const newPostId = uuidv4();
+    // PostDate will be automatically populated with built-in "createdAt" feature
+    const newPost = {
+        PostTitle: request.PostTitle,
+        PostContent: request.PostContent,
+        _id: newPostId
+    };
+
+    Post.create(newPost)
+    .then((createdPost)=>{
+        
+
+
+
+
+        res.status(201).json({
+            message: 'Post successfully uploaded',
+            post:{
+                PostTitle: createdPost.PostTitle,
+                PostContent: createdPost.PostContent,
+                PostDate: createdPost.createdAt,
+                _id: createdPost._id
+            }
+        });
+        // code to execute 
+
+    })
+    .catch((error)=>{
+        res.status(500).json(error);
+    });
+
+   
 };
 
 exports.getAllPosts = (req, res, next)=>{
-    Post.findAll()
+    Post.findAll({
+        attributes: ['PostTitle', 'PostContent', 'PostDate','_id']
+    })
     .then((posts)=>{
         if(!posts){
             return res.status(404).json({message: 'No posts in the database'});
@@ -34,7 +79,7 @@ exports.getAllPosts = (req, res, next)=>{
 };
 
 exports.getOnePost = (req, res, next)=>{
-
+    const params = req.params;
 };
 
 exports.updateOnePost = (req, res, next)=>{

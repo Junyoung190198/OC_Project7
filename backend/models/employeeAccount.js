@@ -3,7 +3,7 @@ const {DataTypes} = require('sequelize');
 
 
 const Credentials = sequelize.define('Credentials', {
-    CredentialsID:{
+    EmployeeAccountID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false
@@ -21,6 +21,11 @@ const Credentials = sequelize.define('Credentials', {
 
     Password:{
         type: DataTypes.STRING,
+        allowNull: false
+    },
+
+    _id:{
+        type: DataTypes.UUID,
         allowNull: false
     }
 },
