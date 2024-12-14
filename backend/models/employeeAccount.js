@@ -2,7 +2,7 @@ const {sequelize} = require('../config/database');
 const {DataTypes} = require('sequelize');
 
 
-const Credentials = sequelize.define('Credentials', {
+const EmployeeAccount = sequelize.define('Credentials', {
     EmployeeAccountID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -35,4 +35,4 @@ const Credentials = sequelize.define('Credentials', {
 });
 
 
-module.exports = Credentials;
+module.exports = EmployeeAccount;

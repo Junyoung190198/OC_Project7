@@ -24,7 +24,10 @@ const Employees = sequelize.define('Employees', {
     PhoneNumber:{
         type: DataTypes.STRING,
     },
-    
+
+    Email:{
+        type: DataTypes.STRING
+    }
 },
 {
     freezeTableName: true,
