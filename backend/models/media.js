@@ -5,6 +5,7 @@ const Media = sequelize.define('Media',{
     MediaID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
+        autoIncrementIdentity: true,
         allowNull: false
     },
 

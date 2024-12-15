@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const syncModels = require('./models/index');
 const employeeAccountRoutes = require('./routes/employeeAccount');
 const postsRoutes = require('./routes/posts');
+
 
 const app = express(); // set up express server
 
@@ -10,6 +12,8 @@ const app = express(); // set up express server
 app.use(cors()); 
 // set JSON parser so able to use req.body
 app.use(express.json());
+// Allow cookies parsing 
+app.use(cookieParser());
 
 // Connecting to the database and syncing all models to existing tables
 syncModels()

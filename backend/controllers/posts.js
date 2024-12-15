@@ -5,7 +5,7 @@ const {v4: uuidv4} = require('uuid');
 
 exports.createPost = (req, res, next)=>{
 
-    // auth logic here 
+    
 
     const contentType = req.get('Content-Type');
     let request;
@@ -19,7 +19,7 @@ exports.createPost = (req, res, next)=>{
     }
     
     if(!request.PostTitle || !request.PostContent){
-        return res.status(400).json({error: 'Post has no title or no content'});
+        return res.status(400).json({error: new Error('Post has no title or no content')});
     }
 
     // create unique identifier to id each unique post

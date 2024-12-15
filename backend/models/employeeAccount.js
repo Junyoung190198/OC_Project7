@@ -2,10 +2,11 @@ const {sequelize} = require('../config/database');
 const {DataTypes} = require('sequelize');
 
 
-const EmployeeAccount = sequelize.define('Credentials', {
+const EmployeeAccount = sequelize.define('EmployeeAccount', {
     EmployeeAccountID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
+        autoIncrementIdentity: true,
         allowNull: false
     },
 

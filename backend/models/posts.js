@@ -6,6 +6,7 @@ const Posts = sequelize.define('Posts', {
     PostID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
+        autoIncrementIdentity: true,
         allowNull: false
     },
 
