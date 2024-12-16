@@ -19,7 +19,7 @@ exports.createPost = async (req, res, next)=>{
     // Return error if incomplete request
     if(!request.PostTitle || !request.PostContent){
         return res.status(400).json({
-            error: "Incomplete post"
+            error: "Incomplete post: Title or content is missing"
         });
     }
     
@@ -51,9 +51,10 @@ exports.createPost = async (req, res, next)=>{
         }
     });
 
-
    }catch(error){
-    res.status(500).json(error);
+    res.status(500).json({
+        error: error
+    });
    }
 };
 
@@ -63,7 +64,7 @@ exports.getAllPosts = (req, res, next)=>{
     })
     .then((posts)=>{
         if(!posts){
-            return res.status(404).json({message: 'No posts in the database'});
+            return res.status(404).json({error: 'No posts in the database'});
         }
         res.status(200).json({
             message: 'Successfully retrieved all posts',
@@ -87,7 +88,6 @@ exports.updateOnePost = (req, res, next)=>{
 };
 
 exports.deleteOnePost =async (req, res, next)=>{
-
     
 };
 

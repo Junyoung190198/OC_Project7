@@ -89,7 +89,7 @@ exports.login = async (req, res, next)=>{
             Username: request.Username
         }});
         if(!employeeAccount){
-            return res.status(401).json({error: new Error("Username doesn't match: Employee account doesn't exist")})
+            return res.status(401).json({error: new Error("Username doesn't match: Employee account doesn't exist").message})
         }
 
         // verifying the fk EmployeeID of this account matches
@@ -97,7 +97,7 @@ exports.login = async (req, res, next)=>{
         const employeeID = employeeAccount.EmployeeID;
         const employee = await Employees.findByPk(employeeID);
         if(!employee){
-            return res.status(401).json({error: new Error("Unauthorized request: this account doesn't match any employee record")});
+            return res.status(401).json({error: new Error("Unauthorized request: this account doesn't match any employee record").message});
         }
 
         // hashing input password with infos contained in hashed password in the DB
@@ -107,7 +107,7 @@ exports.login = async (req, res, next)=>{
         const validPassword = await bcrypt.compare(plainPassword, hashedPassword);
         if(!validPassword){
             return res.status(401).json({
-                error: new Error("Invalid password")
+                error: new Error("Invalid password").message
             });
         }
 
@@ -151,14 +151,14 @@ exports.login = async (req, res, next)=>{
 exports.refreshToken = (req, res, next)=>{
     const refreshToken = req.cookies.refreshToken;
     if(!refreshToken){
-        return res.status(401).json({error: new Error("No refresh token provided")});
+        return res.status(401).json({error: new Error("No refresh token provided").message});
     }
 
     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded)=>{
         // verify method returns in err if invalid token
         // returns in decoded the decoded payload of the token if valid
         if(err){
-            return res.status(403).json({error: new Error("Invalid refresh token")});
+            return res.status(403).json({error: new Error("Invalid refresh token").message});
         }
 
         const accessToken = jwt.sign(
