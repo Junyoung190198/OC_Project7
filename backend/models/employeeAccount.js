@@ -6,7 +6,6 @@ const EmployeeAccount = sequelize.define('EmployeeAccount', {
     EmployeeAccountID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrementIdentity: true,
         allowNull: false
     },
 

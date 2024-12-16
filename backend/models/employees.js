@@ -5,8 +5,7 @@ const {DataTypes} = require('sequelize');
 const Employees = sequelize.define('Employees', {
     EmployeeID:{
         type: DataTypes.INTEGER,
-        primarykey: true,
-        autoIncrement: false,
+        primaryKey: true,
         allowNull: false
     },
 

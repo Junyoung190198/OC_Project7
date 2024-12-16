@@ -6,7 +6,7 @@ const multer = require('../middleware/multer-config');
 // authentification middleware with web token verification
 const authentification = require('../middleware/authentification');
 
-// create/upload a post
+// create a post
 router.post('/', authentification, multer, postsCtrl.createPost);
 // display/get all posts from any employee (feed like 9gag or reddit)
 router.get('/', postsCtrl.getAllPosts);
