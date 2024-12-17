@@ -4,6 +4,11 @@ const Media = require('../models/media');
 const {v4: uuidv4} = require('uuid');
 require('dotenv').config({path: path.resolve(__dirname, '../.env')});
 
+
+/**
+ * Receives for Posts: PostTitle, PostContent.
+ * if uploading files, receives for Posts
+ */
 exports.createPost = async (req, res, next)=>{
    try{
     const contentType = req.get('Content-Type');
@@ -43,17 +48,14 @@ exports.createPost = async (req, res, next)=>{
     // exclude pk field to prevent sequelize from trying to insert values in this field:
     // --> pk fields are handled internally by DB
     const post = await Posts.create(newPost, {fields: ['PostTitle', 'PostContent', '_id', 'PostDate', 'EmployeeAccountID']})
-    res.status(201).json({
-        message: 'Post successfully uploaded',
-        post: {
-            PostTitle: post.PostTitle,
-            PostContent: post.PostContent,
-            PostDate: post.PostDate,
-            _id: post._id   
-        }
-    });
+    
 
     // create media values for Media table
+    const files = req.files;
+    const videos = files.video;
+    const gifs = files.gif;
+    const images = files.image;
+
     const newMedia ={
         MediaType: 'something',
         PostID: post._id,
@@ -65,6 +67,22 @@ exports.createPost = async (req, res, next)=>{
 
     // bulkCreate all lines by an array of objects
     const medias = await Media.beforeBulkCreate();
+
+
+    res.status(201).json({
+        message: 'Post successfully uploaded',
+        post: {
+            PostTitle: post.PostTitle,
+            PostContent: post.PostContent,
+            PostDate: post.PostDate,
+            _id: post._id   
+        },
+        media:{
+            MediaType: m,
+            PostID: m,
+            MediaUrl: m
+        }
+    });
 
    }catch(error){
     res.status(500).json({
