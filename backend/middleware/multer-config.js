@@ -2,10 +2,23 @@ const multer = require('multer');
 const path = require('path');
 
 
-// Storage configuration for file uploads
+// Storage configuration for file uploads: create 3
+// separate subfolders for video, GIF and images
+// depending on which save in different subfolder
 const storage = multer.diskStorage({
     destination: (req, file, callback)=>{
-        callback(null, 'uploads/');
+        if(file.mimetype.startsWith('image/') && file.mimetype !== 'image.gif'){
+            // it's an image
+            callback(null, 'uploads/images/');
+        } else if(file.mimetype.startsWith('video')){
+            // it's a video
+            callback(null, 'uploads/video/');
+        } else if(file.mimetype === 'image/gif'){
+            // it's a gif
+            callback(null, 'uploads/gifs/');
+        } else{
+            callback(new Error('Invalid file type'), null);
+        }
     },
     filename: (req, file, callback)=>{
         // rename the orignal name of uploaded file and remove the extension

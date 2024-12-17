@@ -1,8 +1,8 @@
 const Posts = require('../models/posts');
-const employeeAccount = require('../models/employeeAccount');
-const {v4: uuidv4} = require('uuid');
 const EmployeeAccount = require('../models/employeeAccount');
-
+const Media = require('../models/media');
+const {v4: uuidv4} = require('uuid');
+require('dotenv').config({path: path.resolve(__dirname, '../.env')});
 
 exports.createPost = async (req, res, next)=>{
    try{
@@ -16,6 +16,8 @@ exports.createPost = async (req, res, next)=>{
         request = req.body;    
     }
     
+
+
     // Return error if incomplete request
     if(!request.PostTitle || !request.PostContent){
         return res.status(400).json({
@@ -51,6 +53,19 @@ exports.createPost = async (req, res, next)=>{
         }
     });
 
+    // create media values for Media table
+    const newMedia ={
+        MediaType: 'something',
+        PostID: post._id,
+        MediaUrl: mediaUrl
+    };
+
+
+
+
+    // bulkCreate all lines by an array of objects
+    const medias = await Media.beforeBulkCreate();
+
    }catch(error){
     res.status(500).json({
         error: error
@@ -59,7 +74,7 @@ exports.createPost = async (req, res, next)=>{
 };
 
 exports.getAllPosts = (req, res, next)=>{
-    Post.findAll({
+    Posts.findAll({
         attributes: ['PostTitle', 'PostContent', 'PostDate','_id']
     })
     .then((posts)=>{
