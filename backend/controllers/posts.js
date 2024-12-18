@@ -55,20 +55,41 @@ exports.createPost = async (req, res, next)=>{
     const videos = files.video;
     const gifs = files.gif;
     const images = files.image;
+    
+    const newMedias = [];
 
-    const newMedia ={
-        MediaType: 'something',
-        PostID: post._id,
-        MediaUrl: mediaUrl
-    };
+    videos.forEach(video =>{
+        const newMedia={
+            MediaType: video.fieldname,
+            PostID: post.PostID,
+            MediaUrl: process.env.BASE_UPLOAD_URL + video.path
+        }
+        newMedias.push(newMedia);
+    });
 
+    gifs.forEach(gif =>{
+        const newMedia={
+            MediaType: gif.fieldname,
+            PostID: post.PostID,
+            MediaUrl: process.env.BASE_UPLOAD_URL + gif.path
+        }
+        newMedias.push(newMedia);
+    });
 
+    images.forEach(image =>{
+        const newMedia={
+            MediaType: image.fieldname,
+            PostID: post.PostID,
+            MediaUrl: process.env.BASE_UPLOAD_URL + image.path
+        }
+        newMedias.push(newMedia);
+    });
 
 
     // bulkCreate all lines by an array of objects
-    const medias = await Media.beforeBulkCreate();
+    const medias = await Media.beforeBulkCreate(newMedias);
 
-
+    // how to not resend the PKS
     res.status(201).json({
         message: 'Post successfully uploaded',
         post: {
