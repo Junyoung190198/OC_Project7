@@ -71,7 +71,10 @@ exports.signup = (req, res, next)=>{
         });        
     })
     .catch((error)=>{
-        res.status(500).json(error);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message || error
+        });
     });
 };
 
@@ -89,7 +92,7 @@ exports.login = async (req, res, next)=>{
             Username: request.Username
         }});
         if(!employeeAccount){
-            return res.status(401).json({error: new Error("Username doesn't match: Employee account doesn't exist").message})
+            return res.status(401).json({error: "Username doesn't match: Employee account doesn't exist"})
         }
 
         // verifying the fk EmployeeID of this account matches
@@ -97,7 +100,7 @@ exports.login = async (req, res, next)=>{
         const employeeID = employeeAccount.EmployeeID;
         const employee = await Employees.findByPk(employeeID);
         if(!employee){
-            return res.status(401).json({error: new Error("Unauthorized request: this account doesn't match any employee record").message});
+            return res.status(401).json({error: "Unauthorized request: this account doesn't match any employee record"});
         }
 
         // hashing input password with infos contained in hashed password in the DB
@@ -107,7 +110,7 @@ exports.login = async (req, res, next)=>{
         const validPassword = await bcrypt.compare(plainPassword, hashedPassword);
         if(!validPassword){
             return res.status(401).json({
-                error: new Error("Invalid password").message
+                error: "Invalid password"
             });
         }
 
@@ -115,7 +118,7 @@ exports.login = async (req, res, next)=>{
         const accessToken = jwt.sign(
             {_id: employeeAccount._id},
             process.env.JWT_ACCESS_SECRET,
-            {expiresIn: '5m'}
+            {expiresIn: '30m'}
         );        
         // Generate refresh token: long
         const refreshToken = jwt.sign(
@@ -139,7 +142,10 @@ exports.login = async (req, res, next)=>{
         });
 
     }catch(error){
-        res.status(500).json(error);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message || error
+        });
     }
 };
 
@@ -151,14 +157,14 @@ exports.login = async (req, res, next)=>{
 exports.refreshToken = (req, res, next)=>{
     const refreshToken = req.cookies.refreshToken;
     if(!refreshToken){
-        return res.status(401).json({error: new Error("No refresh token provided").message});
+        return res.status(401).json({error: "No refresh token provided"});
     }
 
     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded)=>{
         // verify method returns in err if invalid token
         // returns in decoded the decoded payload of the token if valid
         if(err){
-            return res.status(403).json({error: new Error("Invalid refresh token").message});
+            return res.status(403).json({error: "Invalid refresh token"});
         }
 
         const accessToken = jwt.sign(

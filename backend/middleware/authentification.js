@@ -43,8 +43,8 @@ module.exports = async (req, res, next)=>{
 
         // Assign to employeeAccount the entire payload
         // use employeeAccount._id in further endpoints to collect account's _id
-        req.EmployeeAccount = decodedToken;
         const _id = decodedToken._id;
+        req.tokenPayload = decodedToken;
 
         // Check if employeeAccount and employee exists
         const employeeAccount = await EmployeeAccount.findOne({where:{
@@ -62,15 +62,6 @@ module.exports = async (req, res, next)=>{
                 error: "Unauthorized request: Employee doesn't exist" 
             });
         }
-        // More security check: compare account id with account id
-        //  that was in token's payload
-        const requestAccountId = request._id;
-        const tokenAccountId = _id;
-        if(!requestAccountId || requestAccountId !== tokenAccountId){
-            return res.status(401).json({
-                error: "Unauthorized request: account id missing in the request or provided id is invalid"
-            });
-        }
         
         // Passed all authentification layers, passes to the next middleware
         next();
@@ -86,7 +77,10 @@ module.exports = async (req, res, next)=>{
                 error: error
             });
         }
-        res.status(500).json(error);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message || error
+        });
     }    
 };
 

@@ -7,15 +7,15 @@ const path = require('path');
 // depending on which save in different subfolder
 const storage = multer.diskStorage({
     destination: (req, file, callback)=>{
-        if(file.mimetype.startsWith('image/') && file.mimetype !== 'image.gif'){
-            // it's an image
-            callback(null, 'uploads/images/');
-        } else if(file.mimetype.startsWith('video')){
-            // it's a video
-            callback(null, 'uploads/video/');
-        } else if(file.mimetype === 'image/gif'){
-            // it's a gif
+        if(file.mimetype === 'image/gif'){
+            // it's an gif
             callback(null, 'uploads/gifs/');
+        } else if(file.mimetype.startsWith('image/')){
+            // it's a image
+            callback(null, 'uploads/images/');
+        } else if(file.mimetype.startsWith('video/')){
+            // it's a video
+            callback(null, 'uploads/videos/');
         } else{
             callback(new Error('Invalid file type'), null);
         }
