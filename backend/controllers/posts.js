@@ -5,7 +5,36 @@ const {v4: uuidv4} = require('uuid');
 const path = require('path');
 const { where } = require('sequelize');
 require('dotenv').config({path: path.resolve(__dirname, '../.env')});
+const fs = require('fs');
 
+
+
+/**
+ * Function to delete files asynchronously
+ */
+
+const deleteFiles = (existingFiles) => {
+    return new Promise((resolve, reject) => {
+        const deleteFilePromises = existingFiles.map(file => {
+            return new Promise((resolve, reject) => {
+                fs.unlink('uploads/' + file, (err) => {
+                    if (err) {
+                        console.error(`Error deleting file: ${file}`, err);
+                        reject(err);  // Reject the promise on error
+                    } else {
+                        console.log(`Deleted file: ${file}`);
+                        resolve();  // Resolve the promise when the file is successfully deleted
+                    }
+                });
+            });
+        });
+
+        // Wait for all delete operations to finish
+        Promise.all(deleteFilePromises)
+            .then(resolve)  // Resolve the outer promise when all files are deleted
+            .catch(reject);  // Reject the outer promise if any file deletion fails
+    });
+};
 
 /**
  * Receives for authentification: EmployeeAccount._id
@@ -294,6 +323,20 @@ exports.updateOnePost = async (req, res, next)=>{
                 }
             });
             const postPk = updatedPost.PostID;
+            // Logic to reflect updates in the storage: 
+            // delete all files corresponding to the post
+            // and save updated files
+
+            // Extract MediaUrl of all existing files for this post
+            const existingMedias = await Media.findAll({
+                where:{
+                    PostID: postPk
+                },
+                attributes: ['MediaUrl']
+            });
+            // Extract filename of existing files to delete them
+            const existingFiles = existingMedias.map(media => media.MediaUrl.split('/uploads/')[1]);
+            await deleteFiles(existingFiles);
 
             // extract media arrays
             const files = req.files;
@@ -360,6 +403,8 @@ exports.updateOnePost = async (req, res, next)=>{
                 },
                 media: updatedMedias
             });
+
+
         }else{
             request = req.body;
 
@@ -408,10 +453,59 @@ exports.updateOnePost = async (req, res, next)=>{
     }
 };
 
-exports.deleteOnePost =async (req, res, next)=>{
-    
+exports.deleteOnePost = async (req, res, next)=>{
+    try{
+        const params = req.params;
+        const post_id = params.id;
+        
+        const post = await Posts.findOne({
+            where:{
+                _id: post_id
+            }
+        });
+        if(!post){
+            return res.status(404).json({
+                error: "This post doesn't exist or is already deleted"
+            });
+        }
+        const postPk = post.PostID;
+
+        const media = await Media.findAll({
+            where:{
+                PostID: postPk
+            },
+            attributes: ['MediaUrl']
+        });
+        
+        if(media){
+            const files = media.map(media=> media.MediaUrl.split('/uploads/')[1]);
+            await deleteFiles(files);
+
+            await Media.destroy({
+                where:{
+                    PostID: postPk
+                }
+            });
+        }
+
+        await Posts.destroy({
+            where:{
+                PostID: postPk
+            }
+        });
+
+        res.status(200).json({
+            message: 'Post successfully deleted'
+        });
+
+    }catch(error){
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
 };
 
 exports.updateReaction = (req, res, next)=>{
 
-};
+};  
