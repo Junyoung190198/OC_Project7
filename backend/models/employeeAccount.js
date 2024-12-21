@@ -30,8 +30,10 @@ const EmployeeAccount = sequelize.define('EmployeeAccount', {
     }
 },
 {
-    freezeTableName: true,
-    timestamps: false
+    timestamps: true,
+    createdAt: 'CreatedAt',
+    updatedAt: false,
+    freezeTableName: true
 });
 
 

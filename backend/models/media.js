@@ -22,8 +22,10 @@ const Media = sequelize.define('Media',{
     }
 },
 {
-    freezeTableName: true,
-    timestamps: false
+    timestamps: true,
+    createdAt: 'CreatedAt',
+    updatedAt: false,
+    freezeTableName: true
 });
 
 module.exports = Media;

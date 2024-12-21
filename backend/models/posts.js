@@ -25,14 +25,18 @@ const Posts = sequelize.define('Posts', {
     _id:{
         type: DataTypes.UUID,
         allowNull: false
+    },
+    TotalLikes:{
+        type: DataTypes.INTEGER
+    },
+    TotalDislikes:{
+        type: DataTypes.INTEGER
     }
 },
 {
     timestamps: true,
-    createdAt: 'PostDate',
-    updatedAt: false
-},
-{
+    createdAt: 'CreatedAt',
+    updatedAt: false,
     freezeTableName: true
 });
 

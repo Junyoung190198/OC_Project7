@@ -1,6 +1,8 @@
 const Posts = require('../models/posts');
 const EmployeeAccount = require('../models/employeeAccount');
 const Media = require('../models/media');
+const Reactions = require('../models/reactions');
+const {Sequelize} = require('../config/database');
 const {v4: uuidv4} = require('uuid');
 const path = require('path');
 const { where } = require('sequelize');
@@ -36,6 +38,26 @@ const deleteFiles = (existingFiles) => {
     });
 };
 
+
+/**
+ * function to check if ids match for every request 
+ * that need a authentification:
+ * More security check: compare account id with account id
+ * that was in token's payload
+ */
+const checkUnauthorizedRequest = (request)=>{
+    // extracting _id passed by authentification middleware
+    // that was decoded in the token
+    const tokenAccountId = req.tokenPayload._id;
+    const requestAccountId = request.account_id;
+            if(!requestAccountId || requestAccountId !== tokenAccountId){
+                return res.status(401).json({
+                    error: "Unauthorized request: account id missing in the request or provided id is invalid"
+                });
+            }        
+}
+
+
 /**
  * Receives for authentification: EmployeeAccount._id
  * Receives for Posts: PostTitle, PostContent.
@@ -45,22 +67,13 @@ exports.createPost = async (req, res, next)=>{
    try{
     const contentType = req.get('Content-Type');
     let request;
-    // extracting _id passed by authentification middleware
-    // that was decoded in the token
-    const tokenAccountId = req.tokenPayload._id;
+    
     // if it's a form-data request: sending and json and binary files
     if(contentType && contentType.includes('multipart/form-data')){
         // handle request containing uploaded files
         request = JSON.parse(req.body.post);    
 
-        // More security check: compare account id with account id
-        //  that was in token's payload
-        const requestAccountId = request.account_id;
-        if(!requestAccountId || requestAccountId !== tokenAccountId){
-            return res.status(401).json({
-                error: "Unauthorized request: account id missing in the request or provided id is invalid"
-            });
-        }
+        checkUnauthorizedRequest(request);
 
         // Return error if incomplete request
         if(!request.PostTitle || !request.PostContent){
@@ -157,14 +170,7 @@ exports.createPost = async (req, res, next)=>{
         // handle normal application/json request
         request = req.body;    
 
-        // More security check: compare account id with account id
-        //  that was in token's payload
-        const requestAccountId = request.account_id;
-        if(!requestAccountId || requestAccountId !== tokenAccountId){
-            return res.status(401).json({
-                error: "Unauthorized request: account id missing in the request or provided id is invalid"
-            });
-        }
+        checkUnauthorizedRequest(request);
 
         // Return error if incomplete request
         if(!request.PostTitle || !request.PostContent){
@@ -285,17 +291,12 @@ exports.updateOnePost = async (req, res, next)=>{
         const post_id = params.id;
         const contentType = req.get('Content-Type');
         let request;
-        const tokenAccountId = req.tokenPayload._id;
+        
         if(contentType && contentType.includes('multipart/form-data')){
             request = JSON.parse(req.body.post);
 
-            const requestAccountId = request.account_id;
-            if(!requestAccountId || requestAccountId !== tokenAccountId){
-                return res.status(401).json({
-                    error: "Unauthorized request: account id missing in the request or provided id is invalid"
-                });
-            }
-            
+            checkUnauthorizedRequest(request);
+
             if(!request.PostTitle && !request.PostContent && req.files){
                 return res.status(400).json({
                     error: "Incomplete post: At least one of the following is needed: PostTitle, PostContent, file"
@@ -408,12 +409,7 @@ exports.updateOnePost = async (req, res, next)=>{
         }else{
             request = req.body;
 
-            const requestAccountId = request.account_id;
-            if(!requestAccountId || requestAccountId !== tokenAccountId){
-                return res.status(401).json({
-                    error: "Unauthorized request: account id missing in the request or provided id is invalid"
-                });
-            }
+            checkUnauthorizedRequest(request);
 
             if(!request.PostTitle && !request.PostContent){
                 return res.status(400).json({
@@ -453,11 +449,18 @@ exports.updateOnePost = async (req, res, next)=>{
     }
 };
 
+/**
+ * Receives for EmployeeAccount: EmployeeAccount's id
+ * Receives for Posts: Post's id in params
+ */
 exports.deleteOnePost = async (req, res, next)=>{
     try{
         const params = req.params;
         const post_id = params.id;
-        
+        const request = req.body;
+
+        checkUnauthorizedRequest(request);
+
         const post = await Posts.findOne({
             where:{
                 _id: post_id
@@ -506,6 +509,172 @@ exports.deleteOnePost = async (req, res, next)=>{
     }
 };
 
-exports.updateReaction = (req, res, next)=>{
+/**
+ * Receives for Posts: Post's id, ReactionType 
+ * --> 1 if like, 0 if nothing and -1 if dislike
+ * Receives for Reactions: EmployeeAccount's _id, Post's id, ReactionType  
+ * --> 1 if like, 0 if nothing and -1 if dislike, 
+ */
+exports.updateReaction = async (req, res, next)=>{
+    try{
+        const request = req.body;
+        const params = req.params;
+        const postId = params.id;
+        let totalLikes = 0;
+        let totalDislikes = 0;
+        let isLike;
+        let isUpdated;
 
+        checkUnauthorizedRequest(request);
+        
+        // Extract post infos from id of params
+        const post = await Posts.findOne({
+            where:{
+                _id: postId
+            }
+        });
+        if(!post){
+            return res.status(404).json({
+                error: "This post doesn't exist"
+            });
+        }
+
+        // Check if the request is well formed
+        if(![1, 0,-1].includes(request.ReactionType)){
+            return res.status(400).json({
+                error: "Invalid reactionType. Accepted values are 1 (like), 0 (none) and -1 (dislike)"
+            });
+        }
+
+        // Extract EmployeeAccount info from account_id of req.body
+        const employeeAccount = await EmployeeAccount.findOne({
+            where:{
+                _id: tokenAccountId
+            }
+        });
+
+        // Extract pk PostID
+        const postPk = post.PostID;
+        // Extract pk EmployeeAccountID
+        const employeeAccountPk = employeeAccount.EmployeeAccountID;
+
+        // Check if reaction exists and the request contains the same
+        // data as the data stored already
+        const hasReacted = await Reactions.findOne({
+            where:{
+                EmployeeAccountID: employeeAccountPk,
+                PostID: postPk
+            }
+        });
+        if(hasReacted && hasReacted.ReactionType === request.ReactionType){
+            return res.status(400).json({
+                error: 'Must change the reaction type to update status'
+            });
+        // If exists but request is different, update    
+        }else if(hasReacted){
+            await Reactions.update(
+                {
+                    ReactionType: request.ReactionType,
+                    CreatedAt: Sequelize.fn('GETDATE')
+                },
+                {
+                    where:{
+                        EmployeeAccountID: employeeAccountPk,
+                        PostID: postPk
+                    }
+                }
+            );
+            // Update also totalLikes and totalDislikes for Posts
+            // covering all situations
+            if(hasReacted.ReactionType === 1 && (request.ReactionType === 0 || request.ReactionType === -1)){
+                totalLikes -=1;
+                isLike = true;
+            }else if(hasReacted.ReactionType === 0 && request.ReactionType === 1){
+                totalLikes +=1;
+                isLike = true;
+            }else if(hasReacted.ReactionType === 0 && request.ReactionType === -1){
+                totalDislikes +=1;
+                isLike = false;
+            }else{
+                totalDislikes -=1;
+                isLike = false;
+            }
+            // mark as updated
+            isUpdated = true;
+        // if doesn't exist, create new record
+        }else{
+            const newReaction ={
+                EmployeeAccountID: employeeAccountPk,
+                PostID: postPk,
+                ReactionType: request.ReactionType,
+                CreatedAt: Sequelize.fn('GETDATE')
+            };
+            await Reactions.create(newReaction, {
+                fields: ['EmployeeAccountID', 'PostID', 'ReactionType', 'CreatedAt']
+            });
+            // Update also totalLikes and totalDislikes for Posts
+            // covering all situations
+            if(request.ReactionType === 1){
+                totalLikes +=1;
+                isLike = true;
+            }else if(request.ReactionType === -1){
+                totalDislikes +=1;
+                isLike = false;
+            }
+            // mark as created
+            isUpdated = false;
+        }
+
+        // Update also totalLikes and totalDislikes of Posts
+        // Use increment method, previously put a default value in DB
+        // to have something to increment
+        if(isLike === true){
+            await Posts.increment(
+                {
+                    TotalLikes: totalLikes
+                },
+                {
+                    where:{
+                        PostID: postPk
+                    }
+                }
+            );
+        }else{
+            await Posts.increment(
+                {
+                    TotalDislikes: totalDislikes
+                },
+                {
+                    where:{
+                        PostID: postPk
+                    }
+                }
+            );
+        }
+    
+        // Retrieve updated or created post's reaction and resend post
+        const reactionPost = await Posts.findByPk(postPk,{
+            attributes: ['PostTitle', 'PostContent', '_id', 'CreatedAt', 'TotalLikes', 'TotalDislikes']
+        });
+
+        // Res wether it's updated or created
+        if(isUpdated){
+            res.status(200).json({
+                message: "Post's reaction successfully updated",
+                post: reactionPost 
+            });
+        }else{
+            res.status(201).json({
+                message: "Post's reaction successfully created",
+                post: reactionPost
+            });
+    
+        }
+
+    }catch(error){
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
 };  

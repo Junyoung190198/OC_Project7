@@ -13,6 +13,7 @@ const syncModels= async()=>{
         require('./posts');
         require('./media');
         require('./employeeAccount');
+        require('./reactions');
 
         /**
          * Calling relationship.js to define and set relationships 
