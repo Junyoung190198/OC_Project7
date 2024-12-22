@@ -2,7 +2,7 @@ const Posts = require('../models/posts');
 const EmployeeAccount = require('../models/employeeAccount');
 const Media = require('../models/media');
 const Reactions = require('../models/reactions');
-const {Sequelize} = require('../config/database');
+const {Sequelize} = require('sequelize');
 const {v4: uuidv4} = require('uuid');
 const path = require('path');
 const { where } = require('sequelize');
@@ -45,15 +45,13 @@ const deleteFiles = (existingFiles) => {
  * More security check: compare account id with account id
  * that was in token's payload
  */
-const checkUnauthorizedRequest = (request)=>{
+const checkUnauthorizedRequest = (request, reqTokenPayload)=>{
     // extracting _id passed by authentification middleware
     // that was decoded in the token
-    const tokenAccountId = req.tokenPayload._id;
+    const tokenAccountId = reqTokenPayload._id;
     const requestAccountId = request.account_id;
-            if(!requestAccountId || requestAccountId !== tokenAccountId){
-                return res.status(401).json({
-                    error: "Unauthorized request: account id missing in the request or provided id is invalid"
-                });
+            if(!requestAccountId || requestAccountId !== tokenAccountId){        
+                throw new Error("Unauthorized request: account id missing in the request or provided id is invalid")
             }        
 }
 
@@ -67,14 +65,20 @@ exports.createPost = async (req, res, next)=>{
    try{
     const contentType = req.get('Content-Type');
     let request;
-    
+    const reqTokenPayload = req.tokenPayload;
     // if it's a form-data request: sending and json and binary files
     if(contentType && contentType.includes('multipart/form-data')){
         // handle request containing uploaded files
         request = JSON.parse(req.body.post);    
 
-        checkUnauthorizedRequest(request);
-
+        try{
+            checkUnauthorizedRequest(request, reqTokenPayload);
+        }catch(error){
+            return res.status(401).json({
+                error: error.message
+            });
+        }
+        
         // Return error if incomplete request
         if(!request.PostTitle || !request.PostContent){
             return res.status(400).json({
@@ -84,12 +88,12 @@ exports.createPost = async (req, res, next)=>{
         
         
         const employeeAccount = await EmployeeAccount.findOne({
-            where:{_id: tokenAccountId}
+            where:{_id: reqTokenPayload._id}
         });
         const EmployeeAccountID = employeeAccount.EmployeeAccountID;
         // create unique identifier to id each unique post
         const newPostId = uuidv4();
-        // PostDate will be automatically populated with built-in "createdAt" feature
+        // CreatedAt will be automatically populated with built-in "createdAt" feature
         const newPost = {
             PostTitle: request.PostTitle,
             PostContent: request.PostContent,
@@ -99,8 +103,7 @@ exports.createPost = async (req, res, next)=>{
 
         // exclude pk field to prevent sequelize from trying to insert values in this field:
         // --> pk fields are handled internally by DB
-        const post = await Posts.create(newPost, {fields: ['PostTitle', 'PostContent', '_id', 'PostDate', 'EmployeeAccountID']})
-        console.log(post);
+        const post = await Posts.create(newPost, {fields: ['PostTitle', 'PostContent', '_id', 'CreatedAt', 'EmployeeAccountID']});
         // create media values for Media table
         const files = req.files;
         const videos = files.video || [];
@@ -154,13 +157,13 @@ exports.createPost = async (req, res, next)=>{
         }));
 
 
-        // how to not resend the PKS
+        
         res.status(201).json({
             message: 'Post successfully uploaded',
             post: {
                 PostTitle: post.dataValues.PostTitle,
                 PostContent: post.dataValues.PostContent,
-                PostDate: post.dataValues.PostDate,
+                CreatedAt: post.dataValues.CreatedAt,
                 _id: post.dataValues._id   
             },
             media: mediasToSend
@@ -170,7 +173,13 @@ exports.createPost = async (req, res, next)=>{
         // handle normal application/json request
         request = req.body;    
 
-        checkUnauthorizedRequest(request);
+        try{
+            checkUnauthorizedRequest(request, reqTokenPayload);
+        }catch(error){
+            return res.status(401).json({
+                error: error.message
+            });
+        }
 
         // Return error if incomplete request
         if(!request.PostTitle || !request.PostContent){
@@ -181,12 +190,12 @@ exports.createPost = async (req, res, next)=>{
         
         
         const employeeAccount = await EmployeeAccount.findOne({
-            where:{_id: tokenAccountId}
+            where:{_id: reqTokenPayload._id}
         });
         const EmployeeAccountID = employeeAccount.EmployeeAccountID;
         // create unique identifier to id each unique post
         const newPostId = uuidv4();
-        // PostDate will be automatically populated with built-in "createdAt" feature
+        // CreatedAt will be automatically populated with built-in "createdAt" feature
         const newPost = {
             PostTitle: request.PostTitle,
             PostContent: request.PostContent,
@@ -196,14 +205,14 @@ exports.createPost = async (req, res, next)=>{
 
         // exclude pk field to prevent sequelize from trying to insert values in this field:
         // --> pk fields are handled internally by DB
-        const post = await Posts.create(newPost, {fields: ['PostTitle', 'PostContent', '_id', 'PostDate', 'EmployeeAccountID']});
+        const post = await Posts.create(newPost, {fields: ['PostTitle', 'PostContent', '_id', 'CreatedAt', 'EmployeeAccountID']});
 
         res.status(201).json({
             message: 'Post successfully uploaded',
             post: {
                 PostTitle: post.dataValues.PostTitle,
                 PostContent: post.dataValues.PostContent,
-                PostDate: post.dataValues.PostDate,
+                CreatedAt: post.dataValues.CreatedAt,
                 _id: post.dataValues._id   
             },
         });
@@ -224,7 +233,7 @@ exports.createPost = async (req, res, next)=>{
  */
 exports.getAllPosts = (req, res, next)=>{
     Posts.findAll({
-        attributes: ['PostTitle', 'PostContent', 'PostDate','_id']
+        attributes: ['PostTitle', 'PostContent', 'CreatedAt','_id']
     })
     .then((posts)=>{
         if(!posts){
@@ -257,7 +266,7 @@ exports.getOnePost = async (req, res, next)=>{
         // to the front
         const post = await Posts.findOne({
             where:{_id: _id},
-            attributes: ['PostTitle', 'PostContent', 'PostDate', '_id']
+            attributes: ['PostTitle', 'PostContent', 'CreatedAt', '_id']
         });
         if(!post){
             return res.status(404).json({
@@ -291,11 +300,18 @@ exports.updateOnePost = async (req, res, next)=>{
         const post_id = params.id;
         const contentType = req.get('Content-Type');
         let request;
+        const reqTokenPayload = req.tokenPayload;
         
         if(contentType && contentType.includes('multipart/form-data')){
             request = JSON.parse(req.body.post);
 
-            checkUnauthorizedRequest(request);
+            try{
+                checkUnauthorizedRequest(request, reqTokenPayload);
+            }catch(error){
+                return res.status(401).json({
+                    error: error.message
+                });
+            }
 
             if(!request.PostTitle && !request.PostContent && req.files){
                 return res.status(400).json({
@@ -409,7 +425,13 @@ exports.updateOnePost = async (req, res, next)=>{
         }else{
             request = req.body;
 
-            checkUnauthorizedRequest(request);
+            try{
+                checkUnauthorizedRequest(request, reqTokenPayload);
+            }catch(error){
+                return res.status(401).json({
+                    error: error.message
+                });
+            }
 
             if(!request.PostTitle && !request.PostContent){
                 return res.status(400).json({
@@ -432,7 +454,7 @@ exports.updateOnePost = async (req, res, next)=>{
                 where:{
                     _id: post_id
                 },
-                attributes: ['PostTitle', 'PostContent', 'PostDate', '_id']
+                attributes: ['PostTitle', 'PostContent', 'CreatedAt', '_id']
             });
 
             res.status(201).json({
@@ -458,8 +480,15 @@ exports.deleteOnePost = async (req, res, next)=>{
         const params = req.params;
         const post_id = params.id;
         const request = req.body;
+        const reqTokenPayload = req.tokenPayload;
 
-        checkUnauthorizedRequest(request);
+        try{
+            checkUnauthorizedRequest(request, reqTokenPayload);
+        }catch(error){
+            return res.status(401).json({
+                error: error.message
+            });
+        }
 
         const post = await Posts.findOne({
             where:{
@@ -502,6 +531,7 @@ exports.deleteOnePost = async (req, res, next)=>{
         });
 
     }catch(error){
+        console.error(error);
         res.status(500).json({
             message: 'Internal server error',
             error: error.message || error
@@ -518,14 +548,21 @@ exports.deleteOnePost = async (req, res, next)=>{
 exports.updateReaction = async (req, res, next)=>{
     try{
         const request = req.body;
+        const reactionType = parseInt(request.ReactionType);
+        const reqTokenPayload = req.tokenPayload;
         const params = req.params;
         const postId = params.id;
         let totalLikes = 0;
         let totalDislikes = 0;
-        let isLike;
         let isUpdated;
 
-        checkUnauthorizedRequest(request);
+        try{
+            checkUnauthorizedRequest(request, reqTokenPayload);
+        }catch(error){
+            return res.status(401).json({
+                error: error.message
+            });
+        }
         
         // Extract post infos from id of params
         const post = await Posts.findOne({
@@ -540,7 +577,7 @@ exports.updateReaction = async (req, res, next)=>{
         }
 
         // Check if the request is well formed
-        if(![1, 0,-1].includes(request.ReactionType)){
+        if(![1, 0,-1].includes(reactionType)){
             return res.status(400).json({
                 error: "Invalid reactionType. Accepted values are 1 (like), 0 (none) and -1 (dislike)"
             });
@@ -549,7 +586,7 @@ exports.updateReaction = async (req, res, next)=>{
         // Extract EmployeeAccount info from account_id of req.body
         const employeeAccount = await EmployeeAccount.findOne({
             where:{
-                _id: tokenAccountId
+                _id: reqTokenPayload._id
             }
         });
 
@@ -566,7 +603,7 @@ exports.updateReaction = async (req, res, next)=>{
                 PostID: postPk
             }
         });
-        if(hasReacted && hasReacted.ReactionType === request.ReactionType){
+        if(hasReacted && hasReacted.ReactionType === reactionType){
             return res.status(400).json({
                 error: 'Must change the reaction type to update status'
             });
@@ -574,7 +611,7 @@ exports.updateReaction = async (req, res, next)=>{
         }else if(hasReacted){
             await Reactions.update(
                 {
-                    ReactionType: request.ReactionType,
+                    ReactionType: reactionType,
                     CreatedAt: Sequelize.fn('GETDATE')
                 },
                 {
@@ -586,18 +623,20 @@ exports.updateReaction = async (req, res, next)=>{
             );
             // Update also totalLikes and totalDislikes for Posts
             // covering all situations
-            if(hasReacted.ReactionType === 1 && (request.ReactionType === 0 || request.ReactionType === -1)){
+            if(hasReacted.ReactionType === 1 && (reactionType === 0 || reactionType === -1)){
                 totalLikes -=1;
-                isLike = true;
-            }else if(hasReacted.ReactionType === 0 && request.ReactionType === 1){
+                if(reactionType === -1){
+                    totalDislikes +=1;
+                }
+            }else if(hasReacted.ReactionType === 0 && reactionType === 1){
                 totalLikes +=1;
-                isLike = true;
-            }else if(hasReacted.ReactionType === 0 && request.ReactionType === -1){
+            }else if(hasReacted.ReactionType === 0 && reactionType === -1){
                 totalDislikes +=1;
-                isLike = false;
-            }else{
+            }else if(hasReacted.ReactionType === -1 && (reactionType === 0 || reactionType === 1)){
                 totalDislikes -=1;
-                isLike = false;
+                if(reactionType === 1){
+                    totalLikes +=1;
+                }
             }
             // mark as updated
             isUpdated = true;
@@ -606,7 +645,7 @@ exports.updateReaction = async (req, res, next)=>{
             const newReaction ={
                 EmployeeAccountID: employeeAccountPk,
                 PostID: postPk,
-                ReactionType: request.ReactionType,
+                ReactionType: reactionType,
                 CreatedAt: Sequelize.fn('GETDATE')
             };
             await Reactions.create(newReaction, {
@@ -614,12 +653,11 @@ exports.updateReaction = async (req, res, next)=>{
             });
             // Update also totalLikes and totalDislikes for Posts
             // covering all situations
-            if(request.ReactionType === 1){
+            if(reactionType === 1){
                 totalLikes +=1;
-                isLike = true;
-            }else if(request.ReactionType === -1){
+
+            }else if(reactionType === -1){
                 totalDislikes +=1;
-                isLike = false;
             }
             // mark as created
             isUpdated = false;
@@ -628,29 +666,17 @@ exports.updateReaction = async (req, res, next)=>{
         // Update also totalLikes and totalDislikes of Posts
         // Use increment method, previously put a default value in DB
         // to have something to increment
-        if(isLike === true){
-            await Posts.increment(
-                {
-                    TotalLikes: totalLikes
-                },
-                {
-                    where:{
-                        PostID: postPk
-                    }
+        await Posts.increment(
+            {
+                totalLikes: totalLikes,
+                TotalDislikes: totalDislikes
+            },
+            {
+                where:{
+                    PostID: postPk
                 }
-            );
-        }else{
-            await Posts.increment(
-                {
-                    TotalDislikes: totalDislikes
-                },
-                {
-                    where:{
-                        PostID: postPk
-                    }
-                }
-            );
-        }
+            }
+        );
     
         // Retrieve updated or created post's reaction and resend post
         const reactionPost = await Posts.findByPk(postPk,{
@@ -672,7 +698,8 @@ exports.updateReaction = async (req, res, next)=>{
         }
 
     }catch(error){
-        res.status(500).json({
+        console.error(error);
+        res.status(500).json({            
             message: 'Internal server error',
             error: error.message || error
         });

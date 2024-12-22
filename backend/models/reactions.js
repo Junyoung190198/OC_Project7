@@ -19,7 +19,7 @@ const Reactions = sequelize.define('Reactions', {
     },
 
     ReactionType:{
-        type: DataTypes.TINYINT
+        type: DataTypes.SMALLINT
     }
 },
 {

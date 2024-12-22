@@ -170,7 +170,7 @@ exports.refreshToken = (req, res, next)=>{
         const accessToken = jwt.sign(
             {_id: decoded._id},
             process.env.JWT_ACCESS_SECRET,
-            {expiresIn: '5m'}
+            {expiresIn: '30m'}
         );
 
         res.status(200).json({
