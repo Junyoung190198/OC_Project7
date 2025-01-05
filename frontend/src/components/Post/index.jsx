@@ -1,30 +1,39 @@
 import styled from "styled-components"
 import colors from "../../utils/style/colors"
 
-const PostWrapper = styled.div`
+const ContentWrapper = styled.div`
     padding: 10px;
-    background-color: ${colors.backgroundSecondary};
-    border-radius: 15px;
-
+    padding-top: 0;
+    border-radius: 15px; 
+    
 `
+
 const PostTitle = styled.h2`
-    padding-left: 10px;
+    text-align: center; 
 `
 const PostContent = styled.p`
     padding: 10px;
 `
 const CreatedAt = styled.span`
-    text-style: italic;
+    font-style: italic;
+`
+const CreatedAtWrapper = styled.div`
+    display: flex;
+    justify-content: flex-end;
 `
 
-const Post = ({postTitle, postContent, createdAt})=>{
+
+
+const Post = ({postTitle, postContent, createdAt, _id})=>{
     return (
-        <PostWrapper>
+        <ContentWrapper>
             <PostTitle>{postTitle}</PostTitle>
             <PostContent>{postContent}</PostContent>
-            <CreatedAt>{createdAt}</CreatedAt>
-        </PostWrapper>
-    
+
+            <CreatedAtWrapper>
+                <CreatedAt>{createdAt}</CreatedAt>
+            </CreatedAtWrapper>
+        </ContentWrapper>
     )
 }
 

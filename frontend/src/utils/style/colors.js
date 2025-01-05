@@ -5,7 +5,7 @@ const colors = {
     fourth: '#5c6c74', // Heavy grey
     fifth: '#ae2c00', // Heavy orange
     sixth: '#181c1f', // Heavy blue
-    backgroundPrimary: 'white', // white
+    backgroundPrimary: '#000000', // black
     backgroundSecondary: '#e5ebee', // grey background of reddit
 }
 

@@ -5,6 +5,7 @@ const StyledGlobalStyle = createGlobalStyle`
         font-family: 'Trebuchet MS', Helvetica, sans-serif;
     }
     body{
+        width: 100%;
         margin: 0;
     }
 `

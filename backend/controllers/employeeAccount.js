@@ -16,7 +16,7 @@ console.log(secretKey); */
 /**
  * receives for Employees: FirstName, LastName, Address, unique PhoneNumber,
  * unique Email
- * receives for EmployeeAccount: unique username, unique password
+ * receives for EmployeeAccount: unique Email, unique Password
  * creates for EmployeeAccount: _id
  * Using 'fields' option to prevent sequelize from trying to insert
  * values in the already identity auto increment pks
@@ -43,7 +43,7 @@ exports.signup = (req, res, next)=>{
             // create uuid for external identification of account
             const newEmployeeAccountId = uuidv4();
             const newEmployeeAccount = {
-                Username: request.Username,
+                Username: request.Email,
                 Password: hashedPassword,
                 EmployeeID: EmployeeID,
                 _id: newEmployeeAccountId
@@ -58,7 +58,7 @@ exports.signup = (req, res, next)=>{
             .catch((error)=>{
                 res.status(400).json({
                     message: "Couldn't create new employee's account",
-                    error: error
+                    error: error.message || error
                 });
             });
 
@@ -66,7 +66,7 @@ exports.signup = (req, res, next)=>{
         .catch((error)=>{
             res.status(400).json({
                 message: "Couldn't create new employee",
-                error: error
+                error: error.message || error
             });
         });        
     })
@@ -79,7 +79,7 @@ exports.signup = (req, res, next)=>{
 };
 
 /**
- * receives for EmployeeAccount: username, password
+ * receives for EmployeeAccount: Username, Password
  * Instead of .then .catch block, could use a simple try catch block
  * as every error that could occur would be a 500 internal server error
  * RE: Finally used try catch
@@ -89,7 +89,7 @@ exports.login = async (req, res, next)=>{
         const request = req.body;
         // verifying employee's account exist in the DB
         const employeeAccount = await EmployeeAccount.findOne({where:{
-            Username: request.Username
+            Username: request.Email
         }});
         if(!employeeAccount){
             return res.status(401).json({error: "Username doesn't match: Employee account doesn't exist"})
@@ -114,6 +114,9 @@ exports.login = async (req, res, next)=>{
             });
         }
 
+        // Giving back the EmployeeAccount's _id 
+        const _id = employeeAccount._id;
+
         // Generate access token: short
         const accessToken = jwt.sign(
             {_id: employeeAccount._id},
@@ -129,16 +132,20 @@ exports.login = async (req, res, next)=>{
 
         // Send refresh token as a HttpOnly cookie 
         // to ensure security
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            sameSite: 'Strict',
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days 
-            path: '/groupomania/auth'
+       res.cookie('refreshToken', refreshToken, {
+            httpOnly: false, // Set to true for production to enhance security
+            sameSite: 'none', // Required for cross-origin cookies
+            secure: false, // Set to true in production if using HTTPS
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            path: '/',
+            domain: '.localhost', // Ensure this matches your frontend's domain
         });
+        console.log(refreshToken)
 
         res.status(200).json({
             message: 'Login successful',
-            token: accessToken
+            token: accessToken,
+            _id: _id
         });
 
     }catch(error){
@@ -156,6 +163,7 @@ exports.login = async (req, res, next)=>{
  */
 exports.refreshToken = (req, res, next)=>{
     const refreshToken = req.cookies.refreshToken;
+    console.log(refreshToken, req.body)
     if(!refreshToken){
         return res.status(401).json({error: "No refresh token provided"});
     }

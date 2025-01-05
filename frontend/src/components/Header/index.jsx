@@ -9,6 +9,7 @@ const HeaderContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 20px;
 
     @media (max-width: 768px){
         flex-direction: column;
@@ -22,8 +23,6 @@ const HeaderNav = styled.nav`
     text-align: center;
     @media (max-width: 768px){
         width: 100%;    
-    
-        
     }
     @media (max-width: 480px){
         

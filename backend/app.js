@@ -8,8 +8,12 @@ const path = require('path');
 
 const app = express(); // set up express server
 
+const corsOptions = {
+    origin: 'http://localhost:3000', // Allow only your frontend's origin
+    credentials: true, // Allow cookies to be sent
+  };
 // allow request to all origins (Need to update if going to productions: security mesures)
-app.use(cors()); 
+app.use(cors(corsOptions)); 
 // set JSON parser so able to use req.body
 app.use(express.json());
 // Allow cookies parsing 
@@ -28,9 +32,9 @@ syncModels()
 // Serve uploaded videos
 app.use('/uploads/videos', express.static(path.join(__dirname, 'uploads/videos')));
 // Serve uploaded gifs
-app.use('uploads/gifs', express.static(path.join(__dirname, 'uploads/gifs')));
+app.use('/uploads/gifs', express.static(path.join(__dirname, 'uploads/gifs')));
 // Serve uploaded images
-app.use('uploads/images', express.static(path.join(__dirname, 'uploads/images')));
+app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
 
 // Authentification routes loading: signup, login etc ...
 app.use('/groupomania/auth', employeeAccountRoutes);

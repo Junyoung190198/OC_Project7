@@ -6,6 +6,7 @@ const LoginContainer = styled.div`
     padding-top: 10%;
     margin-right: 15%;
     margin-left: 15%;
+    padding-bottom: 50px;
 
     @media (max-width: 768px){
         margin-right: 40px;

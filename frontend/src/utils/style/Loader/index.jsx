@@ -10,7 +10,13 @@ const rotate = keyframes`
     }
 `
 
-const Loader = styled.div`
+const LoaderContainer = styled.div`
+    width: 100%;
+    display: flex;
+    justify-content: center;
+`
+
+const LoaderAnim = styled.div`
     padding: 30px;
     border: 15px solid ${colors.primary};
     border-radius: 50%;
@@ -19,5 +25,12 @@ const Loader = styled.div`
     height: 0px;
     width: 0px;
 `
+const Loader = ()=>{
+    return (
+        <LoaderContainer>
+            <LoaderAnim/>
+        </LoaderContainer>
+    )
+}
 
 export default Loader

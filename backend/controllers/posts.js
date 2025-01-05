@@ -230,27 +230,38 @@ exports.createPost = async (req, res, next)=>{
 
 /**
  * Receives for Posts: nothing
+ * Make a join sql query to retrieve and Posts table's
+ * data and Media table's data
  */
-exports.getAllPosts = (req, res, next)=>{
-    Posts.findAll({
-        attributes: ['PostTitle', 'PostContent', 'CreatedAt','_id']
-    })
-    .then((posts)=>{
-        if(!posts){
+exports.getAllPosts = async (req, res, next)=>{
+    try{
+        const posts = await Posts.findAll({
+            attributes: ['PostTitle', 'PostContent', 'CreatedAt','_id'],
+            include: [
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['MediaType', 'MediaUrl']
+                }
+            ]
+        })
+        if(!posts || posts.length === 0){
             return res.status(404).json({error: 'No posts in the database'});
         }
+
         res.status(200).json({
             message: 'Successfully retrieved all posts',
             posts: posts
         });
-    })
-    .catch((error)=>{
+
+    }catch(error){
         res.status(500).json({
             message: 'Internal server error',
             error: error.message || error
         });
-    });
+    }   
 };
+
 
 
 /**
@@ -266,8 +277,16 @@ exports.getOnePost = async (req, res, next)=>{
         // to the front
         const post = await Posts.findOne({
             where:{_id: _id},
-            attributes: ['PostTitle', 'PostContent', 'CreatedAt', '_id']
+            attributes: ['PostTitle', 'PostContent', 'CreatedAt', '_id'],
+            include: [
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['MediaType', 'MediaUrl']
+                }
+            ]
         });
+
         if(!post){
             return res.status(404).json({
                 error: "Post doesn't exist"
