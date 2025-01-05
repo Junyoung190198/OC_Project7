@@ -9,8 +9,8 @@ const defineRelationships = (sequelize)=>{
     Posts.hasMany(Media, {foreignKey:'PostID', as: 'media',constraints: false});
     Media.belongsTo(Posts, {foreignKey:'PostID', as: 'post',constraints: false});
 
-    Employees.hasOne(EmployeeAccount, {foreignKey:'EmployeeAccountID', as: 'account',constraints: false});
-    EmployeeAccount.belongsTo(Employees, {foreignKey:'EmployeeAccountID', as: 'employee',constraints: false});
+    Employees.hasOne(EmployeeAccount, { foreignKey: 'EmployeeID', as: 'account', constraints: false });
+    EmployeeAccount.belongsTo(Employees, { foreignKey: 'EmployeeID', as: 'employee', constraints: false });    
 
     EmployeeAccount.hasMany(Reactions, {foreignKey:'EmployeeAccountID', as: 'reactions',constraints: false});
     Reactions.belongsTo(EmployeeAccount, {foreignKey:'EmployeeAccountID', as: 'account',constraints: false});

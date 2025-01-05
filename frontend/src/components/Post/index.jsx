@@ -1,11 +1,13 @@
 import styled from "styled-components"
 import colors from "../../utils/style/colors"
+import { Link } from "react-router-dom"
 
-const ContentWrapper = styled.div`
+const ContentWrapper = styled(Link)`
+    all: unset;
     padding: 10px;
     padding-top: 0;
     border-radius: 15px; 
-    
+    cursor: pointer;
 `
 
 const PostTitle = styled.h2`
@@ -24,9 +26,12 @@ const CreatedAtWrapper = styled.div`
 
 
 
-const Post = ({postTitle, postContent, createdAt, _id})=>{
+const Post = ({postTitle, postContent, createdAt, _id, readPosts, markAsRead})=>{
+    const handleClick = () => {
+        markAsRead(_id); 
+    }
     return (
-        <ContentWrapper>
+        <ContentWrapper to={`/post/${_id}`} onClick={handleClick}>
             <PostTitle>{postTitle}</PostTitle>
             <PostContent>{postContent}</PostContent>
 

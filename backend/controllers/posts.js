@@ -564,8 +564,8 @@ exports.deleteOnePost = async (req, res, next)=>{
  * Receives for Reactions: EmployeeAccount's _id, Post's id, ReactionType  
  * --> 1 if like, 0 if nothing and -1 if dislike, 
  */
-exports.updateReaction = async (req, res, next)=>{
-    try{
+exports.updateReaction = async (req, res, next) => {
+    try {
         const request = req.body;
         const reactionType = parseInt(request.ReactionType);
         const reqTokenPayload = req.tokenPayload;
@@ -573,95 +573,83 @@ exports.updateReaction = async (req, res, next)=>{
         const postId = params.id;
         let totalLikes = 0;
         let totalDislikes = 0;
-        let isUpdated;
+        let isUpdated = false;
 
-        try{
-            checkUnauthorizedRequest(request, reqTokenPayload);
-        }catch(error){
-            return res.status(401).json({
-                error: error.message
+        // Check if the reactionType is valid
+        if (![1, 0, -1].includes(reactionType)) {
+            return res.status(400).json({
+                error: "Invalid reactionType. Accepted values are 1 (like), 0 (none), and -1 (dislike)"
             });
         }
-        
-        // Extract post infos from id of params
+
+        // Extract post from the database
         const post = await Posts.findOne({
-            where:{
+            where: {
                 _id: postId
             }
         });
-        if(!post){
+        if (!post) {
             return res.status(404).json({
                 error: "This post doesn't exist"
             });
         }
 
-        // Check if the request is well formed
-        if(![1, 0,-1].includes(reactionType)){
-            return res.status(400).json({
-                error: "Invalid reactionType. Accepted values are 1 (like), 0 (none) and -1 (dislike)"
-            });
-        }
-
-        // Extract EmployeeAccount info from account_id of req.body
+        // Extract employee account from token
         const employeeAccount = await EmployeeAccount.findOne({
-            where:{
+            where: {
                 _id: reqTokenPayload._id
             }
         });
 
-        // Extract pk PostID
         const postPk = post.PostID;
-        // Extract pk EmployeeAccountID
         const employeeAccountPk = employeeAccount.EmployeeAccountID;
 
-        // Check if reaction exists and the request contains the same
-        // data as the data stored already
-        const hasReacted = await Reactions.findOne({
-            where:{
+        // Check if the user has already reacted to the post
+        const existingReaction = await Reactions.findOne({
+            where: {
                 EmployeeAccountID: employeeAccountPk,
                 PostID: postPk
             }
         });
-        if(hasReacted && hasReacted.ReactionType === reactionType){
-            return res.status(400).json({
-                error: 'Must change the reaction type to update status'
+
+        // If the reaction already exists and the type is the same, do nothing
+        if (existingReaction && existingReaction.ReactionType === reactionType) {
+            return res.status(200).json({
+                message: "Your reaction is already recorded."
             });
-        // If exists but request is different, update    
-        }else if(hasReacted){
+        }
+
+        // If the reaction exists but is different, update it
+        if (existingReaction) {
             await Reactions.update(
                 {
                     ReactionType: reactionType,
                     CreatedAt: Sequelize.fn('GETDATE')
                 },
                 {
-                    where:{
+                    where: {
                         EmployeeAccountID: employeeAccountPk,
                         PostID: postPk
                     }
-                }
-            );
-            // Update also totalLikes and totalDislikes for Posts
-            // covering all situations
-            if(hasReacted.ReactionType === 1 && (reactionType === 0 || reactionType === -1)){
-                totalLikes -=1;
-                if(reactionType === -1){
-                    totalDislikes +=1;
-                }
-            }else if(hasReacted.ReactionType === 0 && reactionType === 1){
-                totalLikes +=1;
-            }else if(hasReacted.ReactionType === 0 && reactionType === -1){
-                totalDislikes +=1;
-            }else if(hasReacted.ReactionType === -1 && (reactionType === 0 || reactionType === 1)){
-                totalDislikes -=1;
-                if(reactionType === 1){
-                    totalLikes +=1;
-                }
+                });
+
+            // Adjust the like/dislike counters based on the old and new reaction
+            if (existingReaction.ReactionType === 1 && (reactionType === 0 || reactionType === -1)) {
+                totalLikes -= 1;
+                if (reactionType === -1) totalDislikes += 1;
+            } else if (existingReaction.ReactionType === 0 && reactionType === 1) {
+                totalLikes += 1;
+            } else if (existingReaction.ReactionType === 0 && reactionType === -1) {
+                totalDislikes += 1;
+            } else if (existingReaction.ReactionType === -1 && (reactionType === 0 || reactionType === 1)) {
+                totalDislikes -= 1;
+                if (reactionType === 1) totalLikes += 1;
             }
-            // mark as updated
+
             isUpdated = true;
-        // if doesn't exist, create new record
-        }else{
-            const newReaction ={
+        } else {
+            // If the reaction does not exist, create it
+            const newReaction = {
                 EmployeeAccountID: employeeAccountPk,
                 PostID: postPk,
                 ReactionType: reactionType,
@@ -670,57 +658,103 @@ exports.updateReaction = async (req, res, next)=>{
             await Reactions.create(newReaction, {
                 fields: ['EmployeeAccountID', 'PostID', 'ReactionType', 'CreatedAt']
             });
-            // Update also totalLikes and totalDislikes for Posts
-            // covering all situations
-            if(reactionType === 1){
-                totalLikes +=1;
 
-            }else if(reactionType === -1){
-                totalDislikes +=1;
+            if (reactionType === 1) {
+                totalLikes += 1;
+            } else if (reactionType === -1) {
+                totalDislikes += 1;
             }
-            // mark as created
+
             isUpdated = false;
         }
 
-        // Update also totalLikes and totalDislikes of Posts
-        // Use increment method, previously put a default value in DB
-        // to have something to increment
+        // Update total likes and dislikes on the post
         await Posts.increment(
             {
                 totalLikes: totalLikes,
                 TotalDislikes: totalDislikes
             },
             {
-                where:{
+                where: {
                     PostID: postPk
                 }
             }
         );
-    
-        // Retrieve updated or created post's reaction and resend post
-        const reactionPost = await Posts.findByPk(postPk,{
+
+        // Respond with the updated post details
+        const updatedPost = await Posts.findByPk(postPk, {
             attributes: ['PostTitle', 'PostContent', '_id', 'CreatedAt', 'TotalLikes', 'TotalDislikes']
         });
 
-        // Res wether it's updated or created
-        if(isUpdated){
-            res.status(200).json({
+        if (isUpdated) {
+            return res.status(200).json({
                 message: "Post's reaction successfully updated",
-                post: reactionPost 
+                post: updatedPost
             });
-        }else{
-            res.status(201).json({
+        } else {
+            return res.status(201).json({
                 message: "Post's reaction successfully created",
-                post: reactionPost
+                post: updatedPost
             });
-    
         }
 
-    }catch(error){
+    } catch (error) {
         console.error(error);
-        res.status(500).json({            
+        return res.status(500).json({
             message: 'Internal server error',
             error: error.message || error
         });
     }
-};  
+};
+
+exports.checkAccountPost = async (req, res, next) => {
+    try {
+        const { id: postUuid } = req.params; // Post's UUID (_id) from the route parameter
+        const accountUuid = req.tokenPayload._id; // Account's UUID (_id) from the token payload
+
+        // Step 1: Retrieve PostID and EmployeeAccountID from Posts table using postUuid
+        const post = await Posts.findOne({
+            where: { _id: postUuid },
+            attributes: ['PostID', 'EmployeeAccountID'], // Only fetch what is needed
+        });
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found." });
+        }
+
+        const { PostID, EmployeeAccountID: postOwnerAccountId } = post;
+
+        // Step 2: Retrieve EmployeeAccountID from EmployeeAccount table using accountUuid
+        const account = await EmployeeAccount.findOne({
+            where: { _id: accountUuid },
+            attributes: ['EmployeeAccountID'], // Only fetch EmployeeAccountID
+        });
+
+        if (!account) {
+            return res.status(404).json({ error: "Account not found." });
+        }
+
+        const { EmployeeAccountID: requesterAccountId } = account;
+
+        // Step 3: Compare Post's EmployeeAccountID with requester's EmployeeAccountID
+        if (postOwnerAccountId === requesterAccountId) {
+            return res.status(200).json({
+                message: "User is the creator of the post.",
+                isCreator: true,
+            });
+        } else {
+            return res.status(403).json({
+                message: "User is not the creator of the post.",
+                isCreator: false,
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Internal server error",
+            error: error.message || error,
+        });
+    }
+};
+
+

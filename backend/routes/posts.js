@@ -18,6 +18,8 @@ router.put('/:id', authentification, multer, postsCtrl.updateOnePost);
 router.delete('/:id', authentification, postsCtrl.deleteOnePost);
 // update/create like/dislike status
 router.post('/:id/reactions', authentification, postsCtrl.updateReaction);
+// check if the user created the post
+router.get('/:id/check', authentification, postsCtrl.checkAccountPost);
 
 
 module.exports = router;

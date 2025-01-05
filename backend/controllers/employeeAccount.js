@@ -14,6 +14,26 @@ const secretKey = crypto.randomBytes(64).toString('hex');
 console.log(secretKey); */
 
 /**
+ * function to check if ids match for every request 
+ * that need a authentification:
+ * More security check: compare account id with account id
+ * that was in token's payload
+ */
+
+
+const checkUnauthorizedRequest = (request, reqTokenPayload)=>{
+    // extracting _id passed by authentification middleware
+    // that was decoded in the token
+    const tokenAccountId = reqTokenPayload._id;
+    const requestAccountId = request.account_id;
+            if(!requestAccountId || requestAccountId !== tokenAccountId){        
+                throw new Error("Unauthorized request: account id missing in the request or provided id is invalid")
+            }        
+}
+
+
+
+/**
  * receives for Employees: FirstName, LastName, Address, unique PhoneNumber,
  * unique Email
  * receives for EmployeeAccount: unique Email, unique Password
@@ -212,4 +232,108 @@ exports.logout = (req, res, next)=>{
 
     // send back 204 status with no content: self explainatory for logout
     res.sendStatus(204);
+};
+
+
+/**
+ * Receives for EmployeeAccount: _id, token auth
+ */
+exports.getAccount = async (req, res, next)=>{
+    try{
+        const request = req.body;
+        const params = req.params;
+        const account_id = params.id;
+        const reqTokenPayload = req.tokenPayload;
+
+        try{
+            checkUnauthorizedRequest(request, reqTokenPayload);
+        }catch(error){
+            return res.status(401).json({
+                error: error.message
+            });
+        }
+
+        const employeeAccount = await EmployeeAccount.findOne({
+            where:{
+                _id: account_id
+            },
+            attributes: ['Username', '_id', 'CreatedAt'],
+            include: [
+                {
+                    model: Employees,
+                    as: 'employee',
+                    attributes: ['FirstName', 'LastName', 'Address', 'PhoneNumber']
+                }
+            ]
+        });
+
+        if(!employeeAccount){
+            return res.status(404).json({
+                error: "This account doesn't exist"
+            });
+        }
+
+        console.log(employeeAccount);
+
+        res.status(200).json({
+            message: 'Successful retrieved this account',
+            account: employeeAccount
+        });
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({            
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
+};
+
+/**
+ * Receives for EmployeeAccount: _id, token
+ */
+exports.deleteAccount = async (req, res, next)=>{
+    try{
+        const params = req.params;
+        const account_id = params.id;
+        const request = req.body;
+        const reqTokenPayload = req.tokenPayload;
+
+        try{
+            checkUnauthorizedRequest(request, reqTokenPayload);
+        }catch(error){
+            return res.status(401).json({
+                error: error.message
+            });
+        }
+
+        const employeeAccount = await EmployeeAccount.findOne({
+            where:{
+                _id: account_id
+            }
+        });
+
+        if(!employeeAccount){
+            return res.status(404).json({
+                error: "This account doesn't exist or is already deleted"
+            });
+        }
+
+        await EmployeeAccount.destroy({
+            where:{
+                _id: account_id
+            }
+        });
+
+        res.status(200).json({
+            message: 'Account successfully deleted'
+        });
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({            
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
 };

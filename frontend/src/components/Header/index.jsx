@@ -1,6 +1,8 @@
 import styled from "styled-components"
 import colors from "../../utils/style/colors"
 import { Link } from "react-router-dom"
+import { useContext } from "react"
+import { AuthContext } from "../../utils/context/AuthContext"
 
 const HeaderContainer = styled.div`
     border-bottom: solid 2px ${colors.secondary};
@@ -33,7 +35,7 @@ const HeaderList = styled.ul`
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 50px;
+    gap: 30px;
 
     @media (max-width: 768px){
         
@@ -63,7 +65,6 @@ const HeaderListElement = styled(Link)`
     @media (max-width: 480px){
         
     }
-  
 `
 const HeaderTitle = styled.h1`
     color: ${colors.primary};
@@ -71,14 +72,27 @@ const HeaderTitle = styled.h1`
 `
 
 const Header = ()=>{
+
+    const {auth, logout} = useContext(AuthContext)
+
+
     return (
         <HeaderContainer>
             <HeaderTitle>Groupomania Socials</HeaderTitle>
             <HeaderNav>
                 <HeaderList>
                     <HeaderListElement to='/'>Home</HeaderListElement>
-                    <HeaderListElement to='/login'>Log In</HeaderListElement>
-                </HeaderList>
+
+                    {auth.token && (
+                        <HeaderListElement to={`/account/${auth._id}`}>My Account</HeaderListElement>
+                    )}
+
+                    {auth.token ? (
+                        <HeaderListElement as='button' onClick={logout}>Log Out</HeaderListElement>
+                    ): (
+                        <HeaderListElement to='/login'>Log In</HeaderListElement>
+                    )}            
+                </HeaderList>   
             </HeaderNav>
         </HeaderContainer>
     )
