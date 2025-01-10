@@ -2,10 +2,12 @@ const Posts = require('../models/posts');
 const EmployeeAccount = require('../models/employeeAccount');
 const Media = require('../models/media');
 const Reactions = require('../models/reactions');
+const MarkAsRead = require('../models/markAsRead');
 const {Sequelize} = require('sequelize');
+
 const {v4: uuidv4} = require('uuid');
+
 const path = require('path');
-const { where } = require('sequelize');
 require('dotenv').config({path: path.resolve(__dirname, '../.env')});
 const fs = require('fs');
 
@@ -567,7 +569,7 @@ exports.deleteOnePost = async (req, res, next)=>{
 exports.updateReaction = async (req, res, next) => {
     try {
         const request = req.body;
-        const reactionType = parseInt(request.ReactionType);
+        const reactionType = parseInt(request.ReactionType, 10);
         const reqTokenPayload = req.tokenPayload;
         const params = req.params;
         const postId = params.id;
@@ -712,7 +714,7 @@ exports.checkAccountPost = async (req, res, next) => {
         const { id: postUuid } = req.params; // Post's UUID (_id) from the route parameter
         const accountUuid = req.tokenPayload._id; // Account's UUID (_id) from the token payload
 
-        // Step 1: Retrieve PostID and EmployeeAccountID from Posts table using postUuid
+        // Retrieve PostID and EmployeeAccountID from Posts table using postUuid
         const post = await Posts.findOne({
             where: { _id: postUuid },
             attributes: ['PostID', 'EmployeeAccountID'], // Only fetch what is needed
@@ -724,7 +726,7 @@ exports.checkAccountPost = async (req, res, next) => {
 
         const { PostID, EmployeeAccountID: postOwnerAccountId } = post;
 
-        // Step 2: Retrieve EmployeeAccountID from EmployeeAccount table using accountUuid
+        // Retrieve EmployeeAccountID from EmployeeAccount table using accountUuid
         const account = await EmployeeAccount.findOne({
             where: { _id: accountUuid },
             attributes: ['EmployeeAccountID'], // Only fetch EmployeeAccountID
@@ -736,7 +738,7 @@ exports.checkAccountPost = async (req, res, next) => {
 
         const { EmployeeAccountID: requesterAccountId } = account;
 
-        // Step 3: Compare Post's EmployeeAccountID with requester's EmployeeAccountID
+        // Compare Post's EmployeeAccountID with requester's EmployeeAccountID
         if (postOwnerAccountId === requesterAccountId) {
             return res.status(200).json({
                 message: "User is the creator of the post.",
@@ -757,4 +759,70 @@ exports.checkAccountPost = async (req, res, next) => {
     }
 };
 
+/**
+ * Receives MarkAsRead post's _id in params, account's id 
+ * in authentification middleware and isRead
+ * --> 1 if read, 0 if not read. Default is 0
+ */
+exports.updateIsRead = async (req, res, next)=>{
+    try{
+        const request = req.body;
+        const reqTokenPayload = req.tokenPayload;
+        const accountId = reqTokenPayload._id;
+        const params = req.params;
+        const postId = params.id;
+        const isRead = parseInt(request.isRead, 10);
 
+        // Check if the isRead value is valid
+        if(![1,0].includes(isRead)){
+            return res.status(400).json({
+                error: 'Invalid isRead type. Accepted values or 1 and 0'
+            });
+        }
+
+        const post = await Posts.findOne({
+            where:{
+                _id: postId
+            }
+        });
+        const employeeAccount = await EmployeeAccount.findOne({
+            where:{
+                _id: accountId
+            }
+        });
+
+        // extracting PKs
+        const postID = post.PostID;
+        const employeeAccountID = employeeAccount.EmployeeAccountID;
+
+        // Check if this account alread read this post
+        const existingIsRead = await MarkAsRead.findOne({
+            where:{
+                PostID: postID,
+                EmployeeAccountID: employeeAccountID
+            }
+        });
+        // If the status already exist for this account and this post
+        if(existingIsRead){
+            existingIsRead.isRead = isRead;
+            await existingIsRead.save();
+        }else{
+            await MarkAsRead.create({
+                PostID: postID,
+                EmployeeAccountID: employeeAccountID,
+                isRead: isRead
+            });
+        }
+
+        res.status(200).json({
+            message: 'Successfully created or updated isRead status'
+        });
+
+    }catch(error){
+        console.error(error)
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
+};

@@ -1,14 +1,11 @@
-import styled from "styled-components"
-import { Link } from "react-router-dom"
+import styled from "styled-components";
 
-const ContentWrapper = styled(Link)`
-    all: unset;
+
+const ContentWrapper = styled.div`
     padding: 10px;
     padding-top: 0;
     border-radius: 15px; 
-    cursor: pointer;
 `
-
 const PostTitle = styled.h2`
     text-align: center; 
 `
@@ -24,12 +21,9 @@ const CreatedAtWrapper = styled.div`
 `
 
 
-const Post = ({postTitle, postContent, createdAt, _id, readPosts, markAsRead})=>{
-    const handleClick = () => {
-        markAsRead(_id); 
-    }
+const SinglePost = ({postTitle, postContent, createdAt})=>{
     return (
-        <ContentWrapper to={`/post/${_id}`} onClick={handleClick}>
+        <ContentWrapper>
             <PostTitle>{postTitle}</PostTitle>
             <PostContent>{postContent}</PostContent>
 
@@ -40,4 +34,4 @@ const Post = ({postTitle, postContent, createdAt, _id, readPosts, markAsRead})=>
     )
 }
 
-export default Post
+export default SinglePost

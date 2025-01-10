@@ -1,5 +1,13 @@
 import { createContext, useState, useEffect } from "react";
 
+
+/**
+ * Authentification context to catpure access token
+ * sent by the API. Using context to give acces to this
+ * token to everywhere in the app. Not storing token in 
+ * local storage because not safe.
+ * Also store the user account's id received from the API.
+ */
 export const AuthContext = createContext()
 
 export const AuthProvider = ({children})=>{
@@ -8,7 +16,10 @@ export const AuthProvider = ({children})=>{
         _id: null
     })
 
-
+    /**
+     * API request to the refresh route to receive access token
+     * again without re logging in
+     */
     useEffect(() => {
         const refreshAccessToken = async () => {
             try {
@@ -33,6 +44,7 @@ export const AuthProvider = ({children})=>{
             }
         };
 
+        // Send every interval time to gain acces token again
         if (auth.token) {
             const intervalId = setInterval(() => {
                 refreshAccessToken()
@@ -41,9 +53,13 @@ export const AuthProvider = ({children})=>{
             
             return () => clearInterval(intervalId);
         }
-    }, [auth.token]);
+    }, [auth.token]);       
 
 
+    /**
+     * API request to the logout route. Set the acces token and 
+     * the use account's id to null
+     */
     const logout = async()=>{
         try{
             const response = await fetch('http://localhost:5000/groupomania/auth/logout', {

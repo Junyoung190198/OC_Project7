@@ -80,9 +80,6 @@ const SignupLink = styled(Link)`
     all: unset;
     color: ${colors.fourth};
     cursor: pointer;
-   
-    
-    
 
     &:hover{
         color: ${colors.backgroundPrimary};

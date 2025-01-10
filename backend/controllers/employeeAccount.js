@@ -1,10 +1,15 @@
 const EmployeeAccount = require('../models/employeeAccount');
 const Employees = require('../models/employees');
+const Posts = require('../models/posts');
+const Media = require('../models/media');
+
 const bcrypt = require('bcrypt');
 const {v4: uuidv4} = require('uuid');
-const path = require('path');
 const jwt = require('jsonwebtoken');
+
+const path = require('path');
 require('dotenv').config({path: path.resolve(__dirname, '../.env')});
+const fs = require('fs');
 
 /*
 const crypto = require('crypto');
@@ -31,6 +36,33 @@ const checkUnauthorizedRequest = (request, reqTokenPayload)=>{
             }        
 }
 
+
+/**
+ * Function to delete files asynchronously
+ */
+
+const deleteFiles = (existingFiles) => {
+    return new Promise((resolve, reject) => {
+        const deleteFilePromises = existingFiles.map(file => {
+            return new Promise((resolve, reject) => {
+                fs.unlink('uploads/' + file, (err) => {
+                    if (err) {
+                        console.error(`Error deleting file: ${file}`, err);
+                        reject(err);  // Reject the promise on error
+                    } else {
+                        console.log(`Deleted file: ${file}`);
+                        resolve();  // Resolve the promise when the file is successfully deleted
+                    }
+                });
+            });
+        });
+
+        // Wait for all delete operations to finish
+        Promise.all(deleteFilePromises)
+            .then(resolve)  // Resolve the outer promise when all files are deleted
+            .catch(reject);  // Reject the outer promise if any file deletion fails
+    });
+};
 
 
 /**
@@ -273,8 +305,6 @@ exports.getAccount = async (req, res, next)=>{
             });
         }
 
-        console.log(employeeAccount);
-
         res.status(200).json({
             message: 'Successful retrieved this account',
             account: employeeAccount
@@ -307,6 +337,7 @@ exports.deleteAccount = async (req, res, next)=>{
             });
         }
 
+        // Search if employee account exists
         const employeeAccount = await EmployeeAccount.findOne({
             where:{
                 _id: account_id
@@ -319,9 +350,56 @@ exports.deleteAccount = async (req, res, next)=>{
             });
         }
 
+        // Find all posts related to this account anc extract the posts's PKs
+        const employeeAccountId = employeeAccount.EmployeeAccountID;
+        // Find Employee info related to this account
+        const employeeId = employeeAccount.EmployeeID;
+
+        const posts = await Posts.findAll({
+            where:{
+                EmployeeAccountID: employeeAccountId
+            }
+        })
+
+        const postIds = posts.map(post => post.PostID);
+
+        const media = await Media.findAll({
+            where:{
+                PostID: postIds
+            },
+            attributes: ['MediaUrl']
+        });
+        
+        if(media){
+            const files = media.map(media=> media.MediaUrl.split('/uploads/')[1]);
+            await deleteFiles(files);
+
+            // Delete all medias related to those posts
+            await Media.destroy({
+                where:{
+                    PostID: postIds
+                }
+            });
+        }
+
+        // Then delete all posts related to this account
+        await Posts.destroy({
+            where:{
+                PostID: postIds
+            }
+        });
+
+        // Then delete the account
         await EmployeeAccount.destroy({
             where:{
                 _id: account_id
+            }
+        });
+
+        // Then delete employee's info related to this account
+        await Employees.destroy({
+            where:{
+                EmployeeID: employeeId
             }
         });
 

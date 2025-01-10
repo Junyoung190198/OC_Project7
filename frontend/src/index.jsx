@@ -12,10 +12,10 @@ import Footer from './components/Footer';
 import Account from './pages/Account';
 import Header from './components/Header';
 import CreatePost from './pages/CreatePost';
-import SinglePost from './pages/SinglePost';
+import SinglePostPage from './pages/SinglePostPage';
 import UpdatePost from './pages/UpdatePost';
 
-import { ErrorProvider } from './utils/context/ErrorContext';
+import { ErrorHandlingProvider } from './utils/context/ErrorHandlingContext';
 import { LoaderProvider } from './utils/context/LoaderContext';
 import { AuthProvider } from './utils/context/AuthContext';
 
@@ -25,13 +25,13 @@ root.render(
   <React.StrictMode>
     <Router>
       <AuthProvider> 
-        <ErrorProvider>
+        <ErrorHandlingProvider>
           <LoaderProvider>
             <GlobalStyle/>
             <Header/>
               <Routes>
                 <Route path='/' element={<Home/>}/>
-                <Route path='/post/:id' element={<SinglePost/>}/>
+                <Route path='/post/:id' element={<SinglePostPage/>}/>
                 <Route path='/login' element={<Login/>}/>
                 <Route path='/signup' element={<Signup/>}/>
                 <Route path='/account/:id' element={<Account/>}/>
@@ -41,7 +41,7 @@ root.render(
               </Routes>
             <Footer/>
           </LoaderProvider>
-        </ErrorProvider>
+        </ErrorHandlingProvider>
       </AuthProvider>  
     </Router>    
   </React.StrictMode>

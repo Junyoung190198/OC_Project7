@@ -14,7 +14,7 @@ const syncModels= async()=>{
         require('./media');
         require('./employeeAccount');
         require('./reactions');
-
+        require('./markAsRead');
         /**
          * Calling relationship.js to define and set relationships 
          * and associations

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react"
-import { ErrorContext } from "../../utils/context/ErrorContext"
+import { ErrorHandlingContext } from "../../utils/context/ErrorHandlingContext"
 import { LoaderContext } from "../../utils/context/LoaderContext"
 import Loader from "../../utils/style/Loader"
 import styled from "styled-components"
@@ -54,8 +54,6 @@ const CreatePostButtonContainer = styled.div`
     display: flex;
     justify-content: flex-end;
     width: 100%;
-    padding: 15px;
-    padding-right: 100px;
     @media (max-width: 768px){
         width: 60%;
         justify-content: center;    
@@ -71,7 +69,7 @@ const CreatePostButton = styled(Link)`
     padding: 15px;
     cursor: pointer;
     color: white;
-    align-self: end;
+    margin-right: 30px;
     background-color: ${colors.sixth};
     border-radius: 30px;
     &:hover{
@@ -136,35 +134,67 @@ const ReadIcon = styled(FaEnvelopeOpen)`
 
 const Home = ()=>{
 
-    // State to store fetched data
+    // State to store fetched posts's data
     const [postData, setPostData] = useState([])
-    // Getting error context data from context
-    const {error, setError} = useContext(ErrorContext)
-    // Getting loader context
-    const {isLoaded, setIsLoaded} = useContext(LoaderContext)
+    // loader context
+    const {isLoading, setIsLoading} = useContext(LoaderContext)
+    // Reaction state to store reaction updates
     const [reaction, setReaction] = useState({})
+    // isRead state to store isRead data
+    const [isRead, setIsRead] = useState(0)
+    // Access token and user account's id data
     const {auth} = useContext(AuthContext)
-    const [readPosts, setReadPosts] = useState({})
+    //Error handling context: errore and success message
+    const {errorMessage, ErrorMessage, setErrorMessage} = useContext(ErrorHandlingContext)
 
-    
+   /**
+    * Effect to run at first render to fecth all posts 
+    * in the database
+    */
     useEffect(()=>{
+        //Reset error message context
+        setErrorMessage('')
+
         const fetchPosts = async ()=>{
             try{
+                setIsLoading(true)
                 const response = await fetch('http://localhost:5000/groupomania/posts')
-                if(!response.ok){   
-                    throw new Error(`Error fetching data ${response.status}`)
-                }
                 const data = await response.json()
-                setPostData(data.posts)
-                setIsLoaded(true)
+
+                if(response.ok){
+                    setPostData(data.posts)
+                    setIsLoading(false)
+                    console.log("Successfully retrieved posts's data", data)
+                }else{
+                    setIsLoading(false)
+                    setErrorMessage("An error occured when trying to fetch posts's data")
+                    console.error(data.error)
+                }   
+                
             }catch(error){
+                setIsLoading(false)
+                setErrorMessage("An error occured when trying to fetch posts's data")
                 console.error(error.message || error)
-                setError(error.message || error)
             }
         }   
 
         fetchPosts()
     }, [])
+
+    /**
+     * Effect to run at first render to fetch isRead info
+     * Mark as read if this account has read the post and 
+     * mark as unread if it's another account
+     */
+    useEffect(()=>{
+        try{
+
+        }catch(error){
+            console.error(error)
+        }
+    }, [])
+
+
 
     const sendReactionToBackend = async (_id, reaction)=>{
         try{
@@ -172,8 +202,7 @@ const Home = ()=>{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${auth.token}`,
-                    
+                    Authorization: `Bearer ${auth.token}`,                    
                 },
                 body: JSON.stringify({
                     ReactionType: reaction,
@@ -186,14 +215,13 @@ const Home = ()=>{
             if(response.ok){
                 console.log('Successfully updated reaction for this post', data)
             }else{
-                console.error(data)
-                setError(data.error)
+                console.error(data.error)
+                setErrorMessage('An error occured when trying to update the reaction')
             }
 
-
         }catch(error){
+            setErrorMessage('An error occured when trying to update the reaction')
             console.error(error.message || error)
-            setError(error.message || error)
         }
     }
 
@@ -244,18 +272,16 @@ const Home = ()=>{
             <CreatePostButtonContainer>
                 <CreatePostButton to='/createPost'>Create my post</CreatePostButton>
             </CreatePostButtonContainer>
-            
-
-            {error ? (<h2>Something went wrong: {error?.message || "Unknown error occurred"}</h2>)
-            : (                
-                isLoaded ? (    
+                   
+            {isLoading ? (    
+            <Loader/>       
+            ): (
                 postData.map((post)=>{                    
-
                     return (
                         <PostContainer key={post._id}>
-
+    
                             <Image medias={post.media}/>
-
+    
                             <Post _id={post._id}
                             postTitle={post.PostTitle}
                             postContent={post.PostContent}
@@ -263,7 +289,7 @@ const Home = ()=>{
                             readPosts={readPosts} 
                             markAsRead={markAsRead} 
                             />
-
+    
                             <IconContainer>    
                                 <EnvelopeIcon
                                 postId={post._id}
@@ -277,18 +303,15 @@ const Home = ()=>{
                                     <DislikeIcon active={reaction[post._id] === -1}/>
                                 </IconButton>
                             </IconContainer>
-
+    
                             <GreyLine/>
-                        </PostContainer>                        
-                    )
-                })                 
-                ): (
-                    <Loader/>     
-                )
-            )     
-        } 
-        
+                        </PostContainer>                    
+                    )                    
+                })   
+            )}
+            {errorMessage && <ErrorMessage/>}
         </PostContainerLayout>
+        
     )
 }
 

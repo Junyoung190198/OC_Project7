@@ -1,15 +1,11 @@
 const { DataTypes } = require('sequelize');
 const {sequelize }= require('../config/database');
+const EmployeeAccount = require('./employeeAccount');
 
-const Reactions = sequelize.define('Reactions', {
-    ReactionID:{
+const MarkAsRead = sequelize.define('MarkAsRead', {
+    MarkAsReadID:{
         type: DataTypes.INTEGER,
         primaryKey: true,
-        allowNull: false
-    },
-
-    EmployeeAccountID:{
-        type: DataTypes.INTEGER,
         allowNull: false
     },
 
@@ -18,7 +14,12 @@ const Reactions = sequelize.define('Reactions', {
         allowNull: false
     },
 
-    ReactionType:{
+    EmployeeAccountID:{
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+
+    isRead:{
         type: DataTypes.SMALLINT
     }
 },
@@ -29,5 +30,4 @@ const Reactions = sequelize.define('Reactions', {
     freezeTableName: true
 });
 
-
-module.exports = Reactions;
+module.exports = MarkAsRead;

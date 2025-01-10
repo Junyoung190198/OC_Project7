@@ -1,8 +1,9 @@
 import styled from "styled-components"
 import colors from "../../utils/style/colors"
 import { useState, useEffect, useContext } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { AuthContext } from "../../utils/context/AuthContext"
+import { ErrorHandlingContext } from "../../utils/context/ErrorHandlingContext"
 
 
 const AccountContainer = styled.div`
@@ -62,16 +63,8 @@ const AccountInfo = styled.li`
     padding: 10px;
 `
 
-const SignupLink = styled.p`
-    color: ${colors.fourth};
-    cursor: pointer;
-   
-    
-    
-
-    &:hover{
-        color: ${colors.backgroundPrimary};
-    }
+const DeleteContainer = styled.div`
+    padding: 15px;
 `
 
 const DeleteButton = styled.button`
@@ -90,15 +83,33 @@ const DeleteButton = styled.button`
     }
 `
 
+const DeleteInfoText = styled.p`
+    color: ${colors.fourth};
+    font-style: italic;
+`
+
 const Account = ()=>{
-
+    // Account's id from the params
     const {id} = useParams()
-    const {auth} = useContext(AuthContext)
+    // Authentification context containing token and account's id
+    const {auth, logout} = useContext(AuthContext)
+    // Store fetched account's data in state
     const [account, setAccount] = useState(null)
-    const [successMessage, setSuccessMessage] = useState("")
-    const [errorMessage, setErrorMessage] = useState("")
+    // Error handling context
+    const {errorMessage, ErrorMessage, setErrorMessage, successMessage, SuccessMessage, setSuccessMessage} = useContext(ErrorHandlingContext)
 
+
+    /**
+     * Every time the id changes, useEffect will run.
+     * The id is the account's id contained in the url, 
+     * so when myAccount button is clicked, the id will change,
+     * triggering the useEffect anc fetching all account's data
+     */
     useEffect(()=>{
+        //Reset error/success message context
+        setErrorMessage('')
+        setSuccessMessage('')
+
         const fetchAccount = async()=>{
             try{
                 const response = await fetch(`http://localhost:5000/groupomania/auth/account/${id}`, {
@@ -116,10 +127,12 @@ const Account = ()=>{
                     console.log('Successfully retrieved the account', data)
                     setAccount(data.account)
                 }else{
-                    console.error(data)
+                    setErrorMessage("An error occured when fetching account's data")
+                    console.error(data.error)
                 }
 
             }catch(error){
+                setErrorMessage("An error occured when fetching account's data")
                 console.error(error.message || error)
             }
         }
@@ -142,16 +155,20 @@ const Account = ()=>{
             const data = await response.json()
 
             if (response.ok) {
-                console.log('Successfully logged out!', data)
+                console.log('Successfully deleted account', data)
                 setSuccessMessage("Account successfully deleted!")
                 setErrorMessage("") 
+
+                await logout()
             } else {
-                setErrorMessage(data.error || "Failed to delete account")
-                setSuccessMessage("")  
+                setErrorMessage("Failed to delete account")
+                setSuccessMessage("") 
+                console.error(data.error) 
             }
         } catch (error) {
-            setErrorMessage("Internal server error")
+            setErrorMessage("Failed to delete account")
             setSuccessMessage("") 
+            console.error(error.message || error)
         }
     }
 
@@ -175,10 +192,14 @@ const Account = ()=>{
                     <AccountInfo>Account created at: {account?.CreatedAt}</AccountInfo>
                 </AccountList>
 
-                {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
-                {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+                {errorMessage && <ErrorMessage/>}
+                {successMessage && <SuccessMessage/>}
 
-                <DeleteButton onClick={handleDelete}>Delete Account</DeleteButton>
+                <DeleteContainer>
+                    <DeleteButton onClick={handleDelete}>Delete Account</DeleteButton>
+                    <DeleteInfoText>We inform you that all related posts are also removed upon account deletion</DeleteInfoText>
+                </DeleteContainer>
+                
             </AccountWrapper>
         </AccountContainer>
     )

@@ -20,7 +20,8 @@ router.delete('/:id', authentification, postsCtrl.deleteOnePost);
 router.post('/:id/reactions', authentification, postsCtrl.updateReaction);
 // check if the user created the post
 router.get('/:id/check', authentification, postsCtrl.checkAccountPost);
-
+// update isRead status
+router.post('/:id/isRead', authentification, postsCtrl.updateIsRead);
 
 module.exports = router;
 

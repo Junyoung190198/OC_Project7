@@ -6,8 +6,8 @@ import { AuthContext } from "../../utils/context/AuthContext"
 
 const HeaderContainer = styled.div`
     border-bottom: solid 2px ${colors.secondary};
-    padding: 10px;
     width: 100%;
+    padding-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -58,9 +58,8 @@ const HeaderListElement = styled(Link)`
         background-color: ${colors.fifth}
     }
 
-    @media (max-width: 768px){
-        width: 40%;
-        
+    @media (max-width: 768px){        
+        width: 180px;
     }
     @media (max-width: 480px){
         
@@ -72,9 +71,8 @@ const HeaderTitle = styled.h1`
 `
 
 const Header = ()=>{
-
+    // Authentification context
     const {auth, logout} = useContext(AuthContext)
-
 
     return (
         <HeaderContainer>

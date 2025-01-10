@@ -77,10 +77,7 @@ const Footer =  ()=>{
                 <FooterList>
                     <FooterListElementAnchor href="mailto:groupomania_contact_us@gmail.com">
                         Contact us?
-                    </FooterListElementAnchor>
-                    <FooterListElementLink to='/'>
-                        Delete my account
-                    </FooterListElementLink>
+                    </FooterListElementAnchor>                    
                 </FooterList>
             </FooterListWrapper>
             
