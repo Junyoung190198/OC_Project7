@@ -149,28 +149,60 @@ const Home = ()=>{
 
    /**
     * Effect to run at first render to fecth all posts 
-    * in the database
+    * in the database. Also return isRead data for every
+    * posts if an account's id was sent in the request's headers
     */
     useEffect(()=>{
         //Reset error message context
         setErrorMessage('')
+        console.log(auth._id)
 
         const fetchPosts = async ()=>{
             try{
-                setIsLoading(true)
-                const response = await fetch('http://localhost:5000/groupomania/posts')
-                const data = await response.json()
+                if(!auth._id){
+                    setIsLoading(true)
+                    const response = await fetch('http://localhost:5000/groupomania/posts')
+                    const data = await response.json()
 
-                if(response.ok){
-                    setPostData(data.posts)
-                    setIsLoading(false)
-                    console.log("Successfully retrieved posts's data", data)
+                    if(response.ok){
+                        setPostData(data.posts)
+                        setIsLoading(false)
+                        console.log("Successfully retrieved posts's data", data)
+                    }else{
+                        setIsLoading(false)
+                        setErrorMessage("An error occured when trying to fetch posts's data")
+                        console.error(data.error)
+                    }   
                 }else{
-                    setIsLoading(false)
-                    setErrorMessage("An error occured when trying to fetch posts's data")
-                    console.error(data.error)
-                }   
-                
+                    setIsLoading(true)
+                    const response = await fetch('http://localhost:5000/groupomania/posts',{
+                        method: 'GET',
+                        headers:{
+                            'x-account_id': auth._id
+                        }
+                    })
+                    const data = await response.json()
+
+                    if(response.ok){
+                        // Extract isRead for each post based on the current user's ID
+                        const postsWithReadStatus = data.posts.map((post) => {
+                            const postReadStatus = post.isRead.find(
+                                (read) => read.EmployeeAccount_id === auth._id
+                            );
+                            return {
+                                ...post,
+                                isRead: postReadStatus ? postReadStatus.isRead : 0, // Default to 0 if not found
+                            };
+                        });
+                        setPostData(postsWithReadStatus);
+                        setIsLoading(false)
+                        console.log("Successfully retrieved posts's data", data)
+                    }else{
+                        setIsLoading(false)
+                        setErrorMessage("An error occured when trying to fetch posts's data")
+                        console.error(data.error)
+                    }   
+                    }                                
             }catch(error){
                 setIsLoading(false)
                 setErrorMessage("An error occured when trying to fetch posts's data")
@@ -179,22 +211,7 @@ const Home = ()=>{
         }   
 
         fetchPosts()
-    }, [])
-
-    /**
-     * Effect to run at first render to fetch isRead info
-     * Mark as read if this account has read the post and 
-     * mark as unread if it's another account
-     */
-    useEffect(()=>{
-        try{
-
-        }catch(error){
-            console.error(error)
-        }
-    }, [])
-
-
+    }, [auth._id])
 
     const sendReactionToBackend = async (_id, reaction)=>{
         try{
@@ -216,11 +233,9 @@ const Home = ()=>{
                 console.log('Successfully updated reaction for this post', data)
             }else{
                 console.error(data.error)
-                setErrorMessage('An error occured when trying to update the reaction')
             }
 
-        }catch(error){
-            setErrorMessage('An error occured when trying to update the reaction')
+        }catch(error){            
             console.error(error.message || error)
         }
     }
@@ -247,17 +262,43 @@ const Home = ()=>{
         })
     }
 
-    const markAsRead = (postId) => {
-        setReadPosts(prev => ({
-            ...prev,
-            [postId]: true, 
-        }));
+    const markAsRead = async (postId, currentReadStatus) => {
+        try {
+            const newReadStatus = currentReadStatus === 1 ? 0 : 1;
+            // Send a request to the backend to mark this post as read
+            const response = await fetch(`http://localhost:5000/groupomania/posts/${postId}/isRead`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${auth.token}`, 
+                },
+                body: JSON.stringify({                    
+                    isRead: newReadStatus 
+                }),
+            });
+    
+            const data = await response.json();
+    
+            if (response.ok) {
+                // Update the state with the new read status for this post
+                setPostData((prevPosts) =>
+                    prevPosts.map((post) =>
+                        post._id === postId ? { ...post, isRead: newReadStatus } : post
+                    )
+                );
+                console.log('Successfully marked the post as read');
+            } else {
+                console.error(data.error);
+            }
+        } catch (error) {            
+            console.error(error.message || error);
+        }
     };
 
     const EnvelopeIcon = ({ postId, readStatus, markAsRead }) => {
         return (
-            <div onClick={() => markAsRead(postId)}>
-                {readStatus ? (
+            <div onClick={() => markAsRead(postId, readStatus)}>
+                {readStatus === 1 ? (
                     <FaEnvelopeOpen style={{ fontSize: '24px', color: 'green' }} />
                 ) : (
                     <FaEnvelope style={{ fontSize: '24px', color: 'gray' }} />
@@ -286,14 +327,12 @@ const Home = ()=>{
                             postTitle={post.PostTitle}
                             postContent={post.PostContent}
                             createdAt={post.CreatedAt}
-                            readPosts={readPosts} 
-                            markAsRead={markAsRead} 
                             />
     
                             <IconContainer>    
                                 <EnvelopeIcon
                                 postId={post._id}
-                                readStatus={readPosts[post._id]} 
+                                readStatus={post.isRead} 
                                 markAsRead={markAsRead} 
                                 /> 
                                 <IconButton onClick={()=>handleLike(post._id)}>

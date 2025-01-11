@@ -24,12 +24,10 @@ const CreatedAtWrapper = styled.div`
 `
 
 
-const Post = ({postTitle, postContent, createdAt, _id, readPosts, markAsRead})=>{
-    const handleClick = () => {
-        markAsRead(_id); 
-    }
+const Post = ({postTitle, postContent, createdAt, _id})=>{
+
     return (
-        <ContentWrapper to={`/post/${_id}`} onClick={handleClick}>
+        <ContentWrapper to={`/post/${_id}`}>
             <PostTitle>{postTitle}</PostTitle>
             <PostContent>{postContent}</PostContent>
 

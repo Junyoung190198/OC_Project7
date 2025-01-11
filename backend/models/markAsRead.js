@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const {sequelize }= require('../config/database');
-const EmployeeAccount = require('./employeeAccount');
 
 const MarkAsRead = sequelize.define('MarkAsRead', {
     MarkAsReadID:{
@@ -17,6 +16,14 @@ const MarkAsRead = sequelize.define('MarkAsRead', {
     EmployeeAccountID:{
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+
+    Post_id:{
+        type: DataTypes.UUID
+    },
+
+    EmployeeAccount_id:{
+        type: DataTypes.UUID
     },
 
     isRead:{

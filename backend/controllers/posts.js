@@ -237,24 +237,63 @@ exports.createPost = async (req, res, next)=>{
  */
 exports.getAllPosts = async (req, res, next)=>{
     try{
-        const posts = await Posts.findAll({
-            attributes: ['PostTitle', 'PostContent', 'CreatedAt','_id'],
-            include: [
-                {
-                    model: Media,
-                    as: 'media',
-                    attributes: ['MediaType', 'MediaUrl']
+        if(req.headers['x-account_id']){
+            console.log('yoyo');
+            console.log(req.headers['x-account_id']);
+            // extract the account id from the headers
+            const accountId = req.headers['x-account_id'];
+            const employeeAccount = await EmployeeAccount.findOne({
+                where:{
+                    _id: accountId
                 }
-            ]
-        })
-        if(!posts || posts.length === 0){
-            return res.status(404).json({error: 'No posts in the database'});
-        }
+            });
+            const employeeAccountID = employeeAccount.EmployeeAccountID;
 
-        res.status(200).json({
-            message: 'Successfully retrieved all posts',
-            posts: posts
-        });
+            const posts = await Posts.findAll({
+                attributes: ['PostTitle', 'PostContent', 'CreatedAt','_id'],
+                include: [
+                    {
+                        model: MarkAsRead,
+                        as: 'isRead',
+                        where: {EmployeeAccountID: employeeAccountID},
+                        attributes: ['Post_id', 'EmployeeAccount_id', 'isRead'],
+                        required: false,                    
+                    },
+                    {
+                        model: Media,
+                        as: 'media',
+                        attributes: ['MediaType', 'MediaUrl']
+                    }
+                ]
+            })
+            if(!posts || posts.length === 0){
+                return res.status(404).json({error: 'No posts in the database'});
+            }
+
+            res.status(200).json({
+                message: 'Successfully retrieved all posts',
+                posts: posts
+            });
+        }else{            
+            const posts = await Posts.findAll({
+                attributes: ['PostTitle', 'PostContent', 'CreatedAt','_id'],
+                include: [
+                    {
+                        model: Media,
+                        as: 'media',
+                        attributes: ['MediaType', 'MediaUrl']
+                    }
+                ]
+            })
+            if(!posts || posts.length === 0){
+                return res.status(404).json({error: 'No posts in the database'});
+            }
+
+            res.status(200).json({
+                message: 'Successfully retrieved all posts',
+                posts: posts
+            });
+        }        
 
     }catch(error){
         res.status(500).json({
@@ -804,14 +843,22 @@ exports.updateIsRead = async (req, res, next)=>{
         });
         // If the status already exist for this account and this post
         if(existingIsRead){
-            existingIsRead.isRead = isRead;
-            await existingIsRead.save();
+            if(existingIsRead.isRead === isRead){
+                return res.status(400).json({
+                    error: 'Same status requested'
+                });
+            } else{
+                existingIsRead.isRead = isRead;
+                await existingIsRead.save();
+            }
         }else{
             await MarkAsRead.create({
                 PostID: postID,
                 EmployeeAccountID: employeeAccountID,
+                Post_id: postId,
+                EmployeeAccount_id: accountId,
                 isRead: isRead
-            });
+            }, {fields: ['PostID', 'EmployeeAccountID', 'Post_id', 'EmployeeAccount_id', 'isRead']});
         }
 
         res.status(200).json({

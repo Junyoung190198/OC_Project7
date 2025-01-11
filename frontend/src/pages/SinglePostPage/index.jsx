@@ -133,12 +133,10 @@ const SinglePostPage = () => {
                     console.log('Successfully updated isRead for this post', data)
                 }else{
                     console.error(data.error)
-                    setErrorMessage("An error occurred while updating isRead status")
                 }
 
             }catch(error){
-                console.error(error.message || error)
-                setErrorMessage("An error occurred while updating isRead status")
+                console.error(error.message || error)                
             }
         }
 
