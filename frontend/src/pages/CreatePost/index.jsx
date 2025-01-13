@@ -183,9 +183,8 @@ const CreatePost = ()=>{
                 setPostTitle("")
                 setPostContent("")
                 setMediaFiles({ image: [], video: [], gif: [] })
-            } else {
-                const errorMessage = data?.error?.message || "An unknown error occurred"
-                setError(errorMessage)
+            } else {                
+                setError("An unknown error occurred")
             }
         } catch (error) {
             setError("An error occurred while submitting the post. Please try again later.")

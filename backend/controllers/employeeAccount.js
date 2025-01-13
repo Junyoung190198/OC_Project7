@@ -168,6 +168,7 @@ exports.login = async (req, res, next)=>{
 
         // Giving back the EmployeeAccount's _id 
         const _id = employeeAccount._id;
+        const darkMode = employeeAccount.DarkMode;
 
         // Generate access token: short
         const accessToken = jwt.sign(
@@ -197,7 +198,8 @@ exports.login = async (req, res, next)=>{
         res.status(200).json({
             message: 'Login successful',
             token: accessToken,
-            _id: _id
+            _id: _id,
+            DarkMode: darkMode
         });
 
     }catch(error){
@@ -406,6 +408,62 @@ exports.deleteAccount = async (req, res, next)=>{
         res.status(200).json({
             message: 'Account successfully deleted'
         });
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({            
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
+};
+
+exports.getDarkMode = async (req, res, next)=>{
+    try{
+        const reqTokenPayload = req.tokenPayload; 
+        const accountId = reqTokenPayload._id;
+
+        const employeeAccount = await EmployeeAccount.findOne({
+            where: { _id: accountId },
+            attributes: ['DarkMode']
+        });
+
+        if (!employeeAccount) {
+            return res.status(404).json({ error: "Account not found" });
+        }
+
+        res.status(200).json({ DarkMode: employeeAccount.DarkMode });
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({            
+            message: 'Internal server error',
+            error: error.message || error
+        });
+    }
+};
+
+exports.updateDarkMode = async (req, res, next)=>{
+    try{
+        const request = req.body;
+        const reqTokenPayload = req.tokenPayload; 
+        const accountId = reqTokenPayload._id;
+
+        const darkMode  = req.body.DarkMode;
+        if (darkMode === undefined) {
+            return res.status(400).json({ error: "DarkMode value is required" });
+        }
+
+        const updatedDarkMode = await EmployeeAccount.update(
+            { DarkMode: darkMode },
+            { where: { _id: accountId } }
+        );
+
+        if (updatedDarkMode[0] === 0) {
+            return res.status(404).json({ error: "Account not found or no change detected" });
+        }
+
+        res.status(200).json({ message: "Dark Mode preference updated successfully" });
 
     }catch(error){
         console.error(error);

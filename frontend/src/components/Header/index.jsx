@@ -3,6 +3,7 @@ import colors from "../../utils/style/colors"
 import { Link } from "react-router-dom"
 import { useContext } from "react"
 import { AuthContext } from "../../utils/context/AuthContext"
+import DarkModeToggle from "../DarkModeToggle"
 
 const HeaderContainer = styled.div`
     border-bottom: solid 2px ${colors.secondary};
@@ -82,7 +83,11 @@ const Header = ()=>{
                     <HeaderListElement to='/'>Home</HeaderListElement>
 
                     {auth.token && (
+                        <>
                         <HeaderListElement to={`/account/${auth._id}`}>My Account</HeaderListElement>
+                        <DarkModeToggle />
+                        </>
+                        
                     )}
 
                     {auth.token ? (

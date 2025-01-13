@@ -27,6 +27,10 @@ const EmployeeAccount = sequelize.define('EmployeeAccount', {
     _id:{
         type: DataTypes.UUID,
         allowNull: false
+    },
+
+    DarkMode:{
+        type: DataTypes.SMALLINT
     }
 },
 {

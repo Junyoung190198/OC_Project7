@@ -18,6 +18,8 @@ import UpdatePost from './pages/UpdatePost';
 import { ErrorHandlingProvider } from './utils/context/ErrorHandlingContext';
 import { LoaderProvider } from './utils/context/LoaderContext';
 import { AuthProvider } from './utils/context/AuthContext';
+import { DarkModeProvider } from './utils/context/DarkModeContext';
+
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -27,7 +29,8 @@ root.render(
       <AuthProvider> 
         <ErrorHandlingProvider>
           <LoaderProvider>
-            <GlobalStyle/>
+            <DarkModeProvider>
+            <GlobalStyle />
             <Header/>
               <Routes>
                 <Route path='/' element={<Home/>}/>
@@ -40,6 +43,7 @@ root.render(
                 <Route path='*' element={<Error404/>}/>
               </Routes>
             <Footer/>
+            </DarkModeProvider>
           </LoaderProvider>
         </ErrorHandlingProvider>
       </AuthProvider>  

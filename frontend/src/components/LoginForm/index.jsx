@@ -57,20 +57,22 @@ const LoginFormTitle = styled.h2`
     }
 `
 
-const LoginSubmitButton = styled.button`
+const LoginSubmitButton = styled.button.attrs((props) => ({
+    disabled: props.disabled
+  }))`
     all: unset;
     background-color: ${colors.primary};
-    cursor: pointer;
+    cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
     padding: 15px;
     border-radius: 30px;
     color: white;
-
-    opacity: ${(props)=> props.disabled ? '0.5' : '1'};
-
-    &:hover{
-        background-color: ${colors.fifth};
+  
+    opacity: ${(props) => (props.disabled ? '0.5' : '1')};
+  
+    &:hover {
+      background-color: ${(props) => (props.disabled ? colors.primary : colors.fifth)};
     }
-`
+  `;
 
 const SignupLink = styled(Link)`
     all: unset;

@@ -10,5 +10,7 @@ router.post('/refresh', employeeAccountCtrl.refreshToken);
 router.post('/logout', employeeAccountCtrl.logout);
 router.post('/account/:id', authentification, employeeAccountCtrl.getAccount)
 router.delete('/:id', authentification, employeeAccountCtrl.deleteAccount);
+router.get('/dark-mode', authentification, employeeAccountCtrl.getDarkMode);
+router.post('/dark-mode', authentification, employeeAccountCtrl.updateDarkMode);
 
 module.exports = router;
