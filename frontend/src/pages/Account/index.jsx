@@ -11,8 +11,6 @@ const AccountContainer = styled.div`
     padding-top: 50px;
     padding-bottom: 50px;
     margin-bottom: 30px;
-    display: flex;
-    justifiy-content: flex-start;
     min-height: 450px;
     background-color: ${colors.backgroundSecondary};
     border-radius: 10px;
@@ -21,18 +19,18 @@ const AccountContainer = styled.div`
     @media (max-width: 768px){
         padding-top: 0;
     }
-
-    @media (max-width: 480px){
-        
-    }
 `
 
 const AccountWrapper = styled.div`
+    width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
     gap: 50px;
+
+    @media (max-width: 768px){
+        align-items: center;
+    }
 `
 
 const AccountTitle = styled.h2`
@@ -46,10 +44,6 @@ const AccountTitle = styled.h2`
         top: 0;
         left: 0;
         padding-bottom: 15px;
-    }
-
-    @media (max-width: 480px){
-        
     }
 `
 
@@ -65,6 +59,14 @@ const AccountInfo = styled.li`
 
 const DeleteContainer = styled.div`
     padding: 15px;
+    width: 100%;
+`
+const DeleteButtonContainer = styled.div`
+    padding: 10px;
+     @media (max-width: 768px){
+        display: flex; 
+        justify-content: center;
+    }
 `
 
 const DeleteButton = styled.button`
@@ -86,6 +88,8 @@ const DeleteButton = styled.button`
 const DeleteInfoText = styled.p`
     color: ${colors.fourth};
     font-style: italic;
+    padding: 10px;
+    margin: 0;
 `
 
 const Account = ()=>{
@@ -172,10 +176,6 @@ const Account = ()=>{
         }
     }
 
-    if(!account){
-        return <h2>Loading account info...</h2>
-    }
-
     const {employee} = account || {}
 
     return (
@@ -196,7 +196,9 @@ const Account = ()=>{
                 {successMessage && <SuccessMessage/>}
 
                 <DeleteContainer>
-                    <DeleteButton onClick={handleDelete}>Delete Account</DeleteButton>
+                    <DeleteButtonContainer>
+                        <DeleteButton onClick={handleDelete}>Delete Account</DeleteButton>
+                    </DeleteButtonContainer>                
                     <DeleteInfoText>We inform you that all related posts are also removed upon account deletion</DeleteInfoText>
                 </DeleteContainer>
                 

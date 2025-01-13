@@ -9,13 +9,13 @@ export const ErrorHandlingProvider = ({children})=>{
 
     const ErrorMessage = ()=>{
         return (
-            <p style={{color: 'red'}}>{errorMessage}</p>
+            <p style={{color: 'red', padding: '10px'}}>{errorMessage}</p>
         )
     }
 
     const SuccessMessage = ()=>{
         return (
-            <p style={{color: 'green'}}>{successMessage}</p>
+            <p style={{color: 'green', padding: '10px'}}>{successMessage}</p>
         )
     }
     

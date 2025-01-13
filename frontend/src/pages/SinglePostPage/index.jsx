@@ -12,22 +12,20 @@ import { Link } from "react-router-dom";
 
 const PostContainerLayout = styled.div`
     padding-top: 30px;
-    margin-right: 15%;
-    margin-left: 15%;
     padding-bottom: 50px;
-
-    @media (max-width: 768px){
-        margin-right: 40px;
-        margin-left: 40px;
-    }
-    @media (max-width: 480px){
-        margin-right: 20px;
-        margin-left: 20px;
-    }
 `;
 
+const PostWrapper = styled.div`
+    display: flex;
+    justify-content: center;
+
+   
+
+`
+
 const PostContainer = styled.div`
-    width: 100%;
+    max-width: 700px;
+    width: 60%;
     padding: 30px;
     border-radius: 15px;
     background-color: ${colors.backgroundSecondary};
@@ -36,10 +34,10 @@ const PostContainer = styled.div`
     @media (max-width: 768px) {
         padding-right: 10px;
         padding-left: 10px;
+        width: 80%;
     }
-    @media (max-width: 480px) {
-        padding-right: 0;
-        padding-left: 0;
+    @media (max-width: 480px) {        
+        
     }
 `;
 
@@ -205,7 +203,7 @@ const SinglePostPage = () => {
                 {isLoading ? (
                         <Loader />
                 ) : singlePostData && (
-                    
+                    <PostWrapper>
                         <PostContainer key={singlePostData._id}>
                             {singlePostData.media && <Image medias={singlePostData.media} />}
                             <SinglePost
@@ -214,6 +212,8 @@ const SinglePostPage = () => {
                                 createdAt={singlePostData.CreatedAt}
                             />
                         </PostContainer>                    
+                    </PostWrapper>    
+                        
                 )}
 
                 {successMessage && <SuccessMessage/>}

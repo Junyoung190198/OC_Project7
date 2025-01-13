@@ -32,6 +32,7 @@ const PostContainerLayout = styled.div`
 `
 
 const PostContainer = styled.div`
+    max-width: 700px;
     padding: 20px;
     padding-right: 30px;
     padding-left: 30px;
@@ -40,9 +41,6 @@ const PostContainer = styled.div`
     width: 60%;
      @media (max-width: 768px){
         width: 80%;       
-    }
-    @media (max-width: 480px){
-        
     } 
 `
 const GreyLine = styled.div`
@@ -58,10 +56,8 @@ const CreatePostButtonContainer = styled.div`
         width: 60%;
         justify-content: center;    
         padding-right: 0;   
+        padding-bottom: 30px;
     }
-    @media (max-width: 480px){
-        
-    } 
 `
 
 const CreatePostButton = styled(Link)`
@@ -140,8 +136,6 @@ const Home = ()=>{
     const {isLoading, setIsLoading} = useContext(LoaderContext)
     // Reaction state to store reaction updates
     const [reaction, setReaction] = useState({})
-    // isRead state to store isRead data
-    const [isRead, setIsRead] = useState(0)
     // Access token and user account's id data
     const {auth} = useContext(AuthContext)
     //Error handling context: errore and success message
@@ -159,6 +153,7 @@ const Home = ()=>{
 
         const fetchPosts = async ()=>{
             try{
+                // if not logged in, send get request without headers
                 if(!auth._id){
                     setIsLoading(true)
                     const response = await fetch('http://localhost:5000/groupomania/posts')
@@ -173,6 +168,7 @@ const Home = ()=>{
                         setErrorMessage("An error occured when trying to fetch posts's data")
                         console.error(data.error)
                     }   
+                // if logged in, send get request with account's id in the headers    
                 }else{
                     setIsLoading(true)
                     const response = await fetch('http://localhost:5000/groupomania/posts',{

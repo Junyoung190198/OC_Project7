@@ -15,16 +15,13 @@ const LoginFormWrapper = styled.form`
     justify-content: center;
     gap: 50px;
     min-height: 450px;
+    width: 700px;
     background-color: ${colors.backgroundSecondary};
     border-radius: 10px;
     position: relative;
 
     @media (max-width: 768px){
-        padding-top: 0;
-    }
-
-    @media (max-width: 480px){
-        
+        padding-top: 50px;
     }
 `
 const LoginFormInput = styled.input`
@@ -33,8 +30,7 @@ const LoginFormInput = styled.input`
     border-radius: 10px;
     color: white;
     padding: 10px;
-    width: 50%;
-    max-width: 300px; 
+    width: 300px; 
 
     border: ${(props)=> (props.$error ? '2px solid red' : 'none')};
 

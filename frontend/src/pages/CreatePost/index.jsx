@@ -26,6 +26,7 @@ const CreatePostWrapper = styled.div`
     align-items: center;
     justify-content: center;
     gap: 30px;
+    max-width: 800px;
 `
 
 const CreatePostTitle = styled.h2`
@@ -43,10 +44,13 @@ const CreatePostTitle = styled.h2`
 `
 
 const InputGroup = styled.div`
-    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+    @media (max-width: 768px) {
+        width: unset;
+    }
 `
 
 const InputLabel = styled.label`
@@ -56,17 +60,26 @@ const InputLabel = styled.label`
 
 const InputField = styled.input`
     padding: 10px;
+    width: 700px;
     font-size: 14px;
     border-radius: 5px;
     border: 1px solid ${colors.fourth};
+    @media (max-width: 768px) {
+        width: 300px;
+    }
 `
 
 const TextAreaField = styled.textarea`
     padding: 10px;
+    width: 700px;
     font-size: 14px;
     border-radius: 5px;
     border: 1px solid ${colors.fourth};
     resize: none;
+    
+    @media (max-width: 768px) {
+        width: 300px;
+    }
 `
 
 const FileInput = styled.input`

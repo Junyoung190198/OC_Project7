@@ -14,6 +14,7 @@ const SignupFormWrapper = styled.form`
     justify-content: center;
     gap: 50px;
     min-height: 750px;
+    width: 700px;
     background-color: ${colors.backgroundSecondary};
     border-radius: 10px;
     position: relative;
@@ -33,8 +34,7 @@ const SignupFormInput = styled.input`
     border-radius: 10px;
     color: white;
     padding: 10px;
-    width: 50%;
-    max-width: 300px;
+    width: 300px;
 
     border: ${(props) => (props.$error ? '2px solid red' : 'none')};
 
@@ -48,15 +48,12 @@ const SignupFormTitle = styled.h2`
     position: absolute;
     top: 10px;
     left: 50px;
+
     @media (max-width: 768px){
         position: relative;
         top: 0;
         left: 0;
         padding-bottom: 15px;
-    }
-
-    @media (max-width: 480px){
-        
     }
 `
 

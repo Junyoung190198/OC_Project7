@@ -3,12 +3,13 @@ import SignupForm from "../../components/SignupForm"
 
 
 const SignupContainer = styled.div`
-    padding-top: 10%;
-    margin-right: 15%;
-    margin-left: 15%;
-    padding-bottom: 50px;
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+    padding-bottom: 30px;
 
     @media (max-width: 768px){
+        padding-top: 20px;
         margin-right: 40px;
         margin-left: 40px;
     }
